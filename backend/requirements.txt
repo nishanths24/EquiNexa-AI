@@ -1,0 +1,11 @@
+pydantic>=2.0
+pandas
+pytest
+mypy
+types-pandas
+yfinance
+pandas-stubs
+scikit-learn
+openai
+chromadb
+sentence-transformers

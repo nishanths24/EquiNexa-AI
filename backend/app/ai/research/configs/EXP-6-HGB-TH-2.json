@@ -1,0 +1,50 @@
+{
+    "experiment_id": "EXP-6-HGB-TH-2",
+    "description": "Phase 6: HistGradientBoosting, Thresh: 0.02, Pat: True",
+    "data": {
+        "dataset_path": "data/phase6_dataset.csv",
+        "tickers": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA",
+            "RELIANCE.NS",
+            "TCS.NS",
+            "INFY.NS",
+            "HDFCBANK.NS",
+            "ICICIBANK.NS"
+        ],
+        "start_date": "2018-01-01",
+        "end_date": "2024-01-01",
+        "features": [
+            "daily_return",
+            "sma_20",
+            "ema_12",
+            "rsi_14",
+            "macd_hist",
+            "atr_14",
+            "bb_width",
+            "vol_change"
+        ]
+    },
+    "target": {
+        "horizon": 5,
+        "threshold": 0.02,
+        "type": "binary"
+    },
+    "validation": {
+        "method": "walk_forward",
+        "initial_train_size": 252,
+        "step_size": 63,
+        "embargo_bars": 1
+    },
+    "model": {
+        "model_type": "HistGradientBoosting",
+        "hyperparameters": {},
+        "use_patterns": true
+    },
+    "random_seed": 42
+}

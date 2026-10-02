@@ -1,0 +1,40 @@
+{
+    "experiment_id": "EXP-5-LOGREG-VOLUME",
+    "description": "Model: LogisticRegression, Features: 8, Patterns: False",
+    "data": {
+        "tickers": [
+            "AAPL",
+            "MSFT",
+            "GOOGL"
+        ],
+        "start_date": "2022-01-01",
+        "end_date": "2023-01-01",
+        "features": [
+            "daily_return",
+            "sma_20",
+            "ema_12",
+            "rsi_14",
+            "macd_hist",
+            "atr_14",
+            "bb_width",
+            "vol_change"
+        ]
+    },
+    "target": {
+        "horizon": 5,
+        "threshold": 0.02,
+        "type": "binary"
+    },
+    "validation": {
+        "method": "walk_forward",
+        "initial_train_size": 100,
+        "step_size": 20,
+        "embargo_bars": 1
+    },
+    "model": {
+        "model_type": "LogisticRegression",
+        "hyperparameters": {},
+        "use_patterns": false
+    },
+    "random_seed": 42
+}
