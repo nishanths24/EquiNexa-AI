@@ -17,14 +17,20 @@ from backend.app.ai.research.monitor import ObservationMonitor
 
 app = FastAPI(title="EquiNexa AI Prospective Engine API", version="1.0.0")
 
-# Allow frontend dev server
+# Allow frontend dev server and production
+origins = [
+    "http://localhost:5173", "http://127.0.0.1:5173",
+    "http://localhost:5174", "http://127.0.0.1:5174",
+    "http://localhost:5175", "http://127.0.0.1:5175"
+]
+
+prod_origin = os.environ.get("FRONTEND_ORIGIN")
+if prod_origin:
+    origins.append(prod_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", "http://127.0.0.1:5173",
-        "http://localhost:5174", "http://127.0.0.1:5174",
-        "http://localhost:5175", "http://127.0.0.1:5175"
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
