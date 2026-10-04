@@ -11,3 +11,7 @@ chromadb
 sentence-transformers
 fastapi
 httpx
+google-genai
+pillow
+python-multipart
+python-dotenv

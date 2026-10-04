@@ -1,0 +1,12 @@
+{
+  "features": {
+    "chart_workspace": "PARTIAL",
+    "indicators": "PARTIAL",
+    "market_data": "IMPLEMENTED_UNVERIFIED",
+    "research_assistant": "IMPLEMENTED_VERIFIED"
+  },
+  "tests": {
+    "backend_pass": 58,
+    "frontend_pass": 9
+  }
+}

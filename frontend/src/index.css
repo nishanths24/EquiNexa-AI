@@ -1,12 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-black-bg: #000000;
+  --color-sidebar-bg: #050505;
+  --color-header-bg: #080808;
+  --color-card-bg: #0b0b0b;
+  --color-hover-bg: #111111;
+  --color-border-subtle: #242424;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #737373;
+  --color-market-up: #22c55e;
+  --color-market-down: #ef4444;
+}
 
 @layer base {
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #F9FAFB;
-    color: #111827;
+    background-color: var(--color-black-bg);
+    color: var(--color-text-primary);
   }
 }

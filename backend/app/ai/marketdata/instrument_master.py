@@ -33,3 +33,23 @@ class InstrumentMaster:
             if alias.lower() in [a.lower() for a in inst.aliases] or alias.lower() == inst.name.lower() or alias.upper() == inst.symbol.upper():
                 return inst
         return None
+
+class InstrumentResolver:
+    def __init__(self, master: InstrumentMaster):
+        self.master = master
+        self._negative_cache = set()
+        
+    def resolve(self, query: str) -> Optional[Instrument]:
+        if query in self._negative_cache:
+            return None
+            
+        inst = self.master.get_by_symbol(query)
+        if inst:
+            return inst
+            
+        inst = self.master.resolve_alias(query)
+        if inst:
+            return inst
+            
+        self._negative_cache.add(query)
+        return None

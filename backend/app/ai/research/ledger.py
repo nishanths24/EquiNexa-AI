@@ -33,16 +33,61 @@ class PredictionLedger:
                     if data.get('_idempotency_key') == idemp_key:
                         return False # Duplicate
                         
+        # Calculate previous hash to maintain chain
+        prev_hash = "0" * 64
+        if os.path.exists(self.ledger_path) and os.path.getsize(self.ledger_path) > 0:
+            with open(self.ledger_path, 'r') as f:
+                lines = [l for l in f if l.strip()]
+                if lines:
+                    last_record = json.loads(lines[-1])
+                    prev_hash = last_record.get('_chain_hash', "0" * 64)
+                    
         # Append record
         record = snapshot.model_dump()
         record['_idempotency_key'] = idemp_key
         record['status'] = 'PENDING'
         record['prediction_timestamp'] = snapshot.prediction_timestamp.isoformat()
         record['as_of_timestamp'] = snapshot.as_of_timestamp.isoformat()
+        record['_prev_hash'] = prev_hash
+        
+        # Current block hash
+        record_string = json.dumps(record, sort_keys=True)
+        record['_chain_hash'] = hashlib.sha256(record_string.encode()).hexdigest()
         
         with open(self.ledger_path, 'a') as f:
             f.write(json.dumps(record) + '\n')
             
+        return True
+        
+    def verify_chain(self) -> bool:
+        """
+        Verifies the hash chain of the ledger to detect tampering.
+        """
+        if not os.path.exists(self.ledger_path):
+            return True
+            
+        prev_hash = "0" * 64
+        with open(self.ledger_path, 'r') as f:
+            for line in f:
+                if not line.strip(): continue
+                record = json.loads(line)
+                
+                # Check link
+                if record.get('_prev_hash') != prev_hash:
+                    return False
+                    
+                # Check current hash
+                claimed_hash = record.pop('_chain_hash', None)
+                recalc_string = json.dumps(record, sort_keys=True)
+                recalc_hash = hashlib.sha256(recalc_string.encode()).hexdigest()
+                
+                if claimed_hash != recalc_hash:
+                    return False
+                    
+                # Restore and step forward
+                record['_chain_hash'] = claimed_hash
+                prev_hash = claimed_hash
+                
         return True
 
     def get_pending_predictions(self) -> List[Dict]:

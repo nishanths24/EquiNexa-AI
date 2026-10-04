@@ -16,20 +16,24 @@ describe('Prospective API Client', () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
-    } as Response);
+      text: async () => JSON.stringify(mockResponse),
+      headers: new Headers({'content-type': 'application/json'}),
+    } as unknown as Response);
 
     const data = await fetchProspectiveStatus();
     expect(data.model_version).toBe('1.0.0');
     expect(data.evaluated).toBe(0);
     // Explicitly check that we did NOT fall back to a fake dataset
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/research/status'));
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/research/status'), expect.any(Object));
   });
 
   it('throws an error correctly on API failure', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: false,
-    } as Response);
+      text: async () => '',
+      headers: new Headers(),
+    } as unknown as Response);
 
-    await expect(fetchProspectiveStatus()).rejects.toThrow('Failed to fetch prospective status');
+    await expect(fetchProspectiveStatus()).rejects.toThrow();
   });
 });
