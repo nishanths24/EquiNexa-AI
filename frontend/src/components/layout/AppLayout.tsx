@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Activity, LayoutDashboard, LineChart, Beaker, Image as ImageIcon, Settings, Search } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { searchMarkets, type SearchResult } from '../../services/api/markets';
+import { getIndianMarketSession } from '../../utils/marketSession';
 
 const AppLayout = () => {
   const location = useLocation();
@@ -12,8 +13,17 @@ const AppLayout = () => {
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [sessionStatus, setSessionStatus] = useState(getIndianMarketSession);
+  const [showTimings, setShowTimings] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSessionStatus(getIndianMarketSession());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -125,8 +135,30 @@ const AppLayout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <header className="h-16 bg-header-bg border-b border-border-subtle flex items-center justify-between px-8">
-          <div className="text-sm font-medium text-text-secondary">Market Session: <span className="text-market-up">Open</span></div>
+        <header className="h-16 bg-header-bg border-b border-border-subtle flex items-center justify-between px-8 relative z-40">
+          <div 
+            className="text-sm font-medium text-text-secondary relative cursor-pointer"
+            onMouseEnter={() => setShowTimings(true)}
+            onMouseLeave={() => setShowTimings(false)}
+          >
+            Market Session: <span className={sessionStatus === 'OPEN' ? 'text-market-up' : sessionStatus === 'PRE_OPEN' ? 'text-yellow-500' : 'text-text-muted'}>
+              {sessionStatus === 'OPEN' ? 'Open' : sessionStatus === 'PRE_OPEN' ? 'Pre-Open' : 'Closed'}
+            </span>
+            
+            {showTimings && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-card-bg border border-border-subtle rounded-lg shadow-lg p-4 z-50">
+                <div className="mb-3">
+                  <div className="text-xs font-bold text-text-primary mb-1 uppercase">India</div>
+                  <div className="text-xs text-text-secondary">NSE/BSE: 9:15 AM – 3:30 PM IST</div>
+                  <div className="text-xs text-text-muted">Pre-open: 9:00 AM – 9:15 AM IST</div>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-text-primary mb-1 uppercase">Forex</div>
+                  <div className="text-xs text-text-secondary">24H · Mon–Fri</div>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center space-x-4">
              {/* Global Search */}
              <div className="relative" ref={searchRef}>

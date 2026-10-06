@@ -57,11 +57,31 @@ const Overview = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {loading ? (
-          ['NIFTY 50', 'SENSEX', 'NIFTY BANK', 'S&P 500', 'NASDAQ'].map(idx => (
+          ['NIFTY 50', 'SENSEX', 'S&P 500', 'NASDAQ', 'Dow Jones'].map(idx => (
             <div key={idx} className="bg-card-bg p-4 rounded-xl border border-border-subtle animate-pulse h-28" />
           ))
         ) : (
-          indices.map(idx => (
+          [
+            { symbol: '^NSEI', name: 'NIFTY 50' },
+            { symbol: '^BSESN', name: 'SENSEX' },
+            { symbol: '^GSPC', name: 'S&P 500' },
+            { symbol: '^IXIC', name: 'NASDAQ' },
+            { symbol: '^DJI', name: 'Dow Jones' }
+          ].map(expected => {
+            const idx = indices.find(i => i.symbol === expected.symbol);
+            if (!idx) {
+              return (
+                <div key={expected.symbol} className="w-full bg-card-bg p-4 rounded-xl border border-border-subtle shadow-sm opacity-60">
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-text-secondary text-xs font-medium truncate" title={expected.name}>{expected.name}</h3>
+                  </div>
+                  <div className="mt-2 text-text-muted text-sm italic">
+                    Data unavailable
+                  </div>
+                </div>
+              );
+            }
+            return (
             <button 
               key={idx.symbol} 
               onClick={() => navigate(`/analysis?ticker=${encodeURIComponent(idx.symbol)}`)}
@@ -79,7 +99,8 @@ const Overview = () => {
               </div>
               <p className="text-[10px] text-text-muted mt-1 uppercase tracking-wider">{idx.status}</p>
             </button>
-          ))
+            );
+          })
         )}
       </div>
 

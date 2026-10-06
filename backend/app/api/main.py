@@ -108,7 +108,7 @@ def get_indices():
     symbols = {
         "NIFTY 50": "^NSEI",
         "SENSEX": "^BSESN",
-        "NIFTY BANK": "^NSEBANK",
+        "Dow Jones": "^DJI",
         "S&P 500": "^GSPC",
         "NASDAQ": "^IXIC"
     }
@@ -163,8 +163,8 @@ _global_master.add_instrument(Instrument(
     aliases=["NIFTY", "NIFTY 50", "NSEI"], market="IN", exchange="NSE", currency="INR", timezone="Asia/Kolkata", instrument_type="INDEX"
 ))
 _global_master.add_instrument(Instrument(
-    instrument_id="IN.XNSE.BANKNIFTY", symbol="^NSEBANK", provider_symbols={"yfinance": "^NSEBANK"}, name="NIFTY BANK",
-    aliases=["BANKNIFTY", "NIFTY BANK", "NSEBANK"], market="IN", exchange="NSE", currency="INR", timezone="Asia/Kolkata", instrument_type="INDEX"
+    instrument_id="US.XNYS.DJI", symbol="^DJI", provider_symbols={"yfinance": "^DJI"}, name="Dow Jones",
+    aliases=["DOW", "Dow Jones", "DJIA"], market="US", exchange="NYSE", currency="USD", timezone="America/New_York", instrument_type="INDEX"
 ))
 _global_master.add_instrument(Instrument(
     instrument_id="US.XNYS.SP500", symbol="^GSPC", provider_symbols={"yfinance": "^GSPC"}, name="S&P 500",
@@ -343,13 +343,17 @@ def get_history(
             if row_utc < start_utc or row_utc > end_utc:
                 continue
 
+            import math
+            def clean_nan(val):
+                return None if math.isnan(float(val)) else float(val)
+
             data.append({
                 "time": row_utc.isoformat(),
-                "open": float(row['Open']),
-                "high": float(row['High']),
-                "low": float(row['Low']),
-                "close": float(row['Close']),
-                "volume": float(row['Volume']),
+                "open": clean_nan(row['Open']),
+                "high": clean_nan(row['High']),
+                "low": clean_nan(row['Low']),
+                "close": clean_nan(row['Close']),
+                "volume": clean_nan(row['Volume']),
                 "is_complete": True
             })
             
