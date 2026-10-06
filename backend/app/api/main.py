@@ -21,7 +21,8 @@ app = FastAPI(title="EquiNexa AI Prospective Engine API", version="1.0.0")
 origins = [
     "http://localhost:5173", "http://127.0.0.1:5173",
     "http://localhost:5174", "http://127.0.0.1:5174",
-    "http://localhost:5175", "http://127.0.0.1:5175"
+    "http://localhost:5175", "http://127.0.0.1:5175",
+    "https://equi-nexa-ai.vercel.app"
 ]
 
 prod_origin = os.environ.get("FRONTEND_ORIGIN")
@@ -31,7 +32,7 @@ if prod_origin:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"^https://equi-nexa-[a-zA-Z0-9\-]+-nishanth-ss-projects-[a-zA-Z0-9\-]+\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
