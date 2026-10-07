@@ -1,3 +1,5 @@
+import { fetchClient } from './client';
+
 export interface ProspectiveStatus {
   model_version: string;
   target: string;
@@ -13,12 +15,6 @@ export interface ProspectiveStatus {
   review_status: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-
 export const fetchProspectiveStatus = async (): Promise<ProspectiveStatus> => {
-  const response = await fetch(`${API_BASE}/api/v1/research/status`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch prospective status');
-  }
-  return response.json();
+  return await fetchClient('/api/v1/research/status');
 };
