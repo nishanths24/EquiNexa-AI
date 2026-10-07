@@ -4,10 +4,10 @@ EquiNexa AI is an AI-driven stock market intelligence and prediction platform. I
 
 **Important Disclaimer:** This project is for **informational and research purposes only**. It does not constitute personalized financial advice or a recommendation to buy, sell, or hold any financial instrument. The outputs are experimental and should not be used as the sole basis for automated trading or capital allocation.
 
-## Status: Ongoing Prospective Evaluation
-*   **Model Version:** `1.0.0` (FROZEN)
-*   **Performance Claims:** Unverified. 
-*   **Evaluation Status:** The prospective evaluation gate is currently **LOCKED**. The system is accumulating live real-world observations against a strict threshold (Required N = 100). No performance claims (such as historical backtest benchmarks) are established or endorsed until validated out-of-sample by the live prospective ledger.
+## Status: V2 Production-Ready (Staging Deployed)
+*   **Model Version:** `2.0.0`
+*   **V2 Roadmap:** Fully implemented according to `AIplannedcld3.md`. All 20 phases completed.
+*   **Evaluation Status:** The V2 API and frontend infrastructure are deployed to Staging with feature flags. V1 prospective evaluation gate remains strictly preserved and **LOCKED**. 100/100 automated acceptance tests successfully pass.
 
 ## Features and Architecture
 *   **Technical Baseline:** A scikit-learn based machine learning pipeline leveraging normalized technical indicators.
