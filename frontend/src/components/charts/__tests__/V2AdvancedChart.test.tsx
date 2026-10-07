@@ -3,7 +3,7 @@
  */
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { V2AdvancedChart, ChartData } from '../V2AdvancedChart';
+import { V2AdvancedChart, type ChartData } from '../V2AdvancedChart';
 
 // Mock lightweight-charts to avoid DOM/Canvas issues in JSDOM
 vi.mock('lightweight-charts', () => ({

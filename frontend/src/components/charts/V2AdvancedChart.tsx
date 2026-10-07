@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createChart, IChartApi, ISeriesApi, Time } from 'lightweight-charts';
+import { createChart, type IChartApi, type ISeriesApi, type Time } from 'lightweight-charts';
 
 export interface ChartData {
   time: string;
