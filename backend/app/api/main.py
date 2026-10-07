@@ -18,7 +18,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from backend.app.ai.research.monitor import ObservationMonitor
 
-app = FastAPI(title="EquiNexa AI Prospective Engine API", version="1.0.0")
+from app.core.security import check_rate_limit, add_security_headers_middleware
+from fastapi import Depends
+
+app = FastAPI(
+    title="EquiNexa AI Prospective Engine API", 
+    version="1.0.0",
+    dependencies=[Depends(check_rate_limit)]
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,6 +34,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+import time
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    return await add_security_headers_middleware(request, call_next)
+
+@app.middleware("http")
+async def add_performance_headers(request: Request, call_next):
+    """Phase 16: Performance profiling middleware."""
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Backend-Latency-Ms"] = str(round(process_time * 1000, 2))
+    return response
 
 @app.exception_handler(Exception)
 async def structured_exception_handler(request: Request, exc: Exception):
@@ -1068,7 +1089,11 @@ def verify_ledger_chain():
 
 # V2 Routers
 from app.api.v2.routers.market_overview import router as market_overview_router
+from app.api.v2.routers.admin import router as admin_router
+from app.api.v2.routers.stream import router as stream_router
 app.include_router(market_overview_router, prefix="/api/v2", tags=["V2 Market Overview"])
+app.include_router(admin_router, prefix="/api/v2")
+app.include_router(stream_router, prefix="/api/v2")
 
 if __name__ == "__main__":
     import uvicorn
