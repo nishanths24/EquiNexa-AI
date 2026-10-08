@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Dict
 from pydantic import BaseModel
+from datetime import datetime
 from backend.app.providers.core.provider_manager import ProviderManager
 from backend.app.providers.adapters.yfinance_adapter import YFinanceAdapter
 from backend.app.models.domain.market import Quote
@@ -42,13 +43,39 @@ async def get_market_overview(pm: ProviderManager = Depends(get_provider_manager
     return result
 
 @router.get("/markets/forex", response_model=List[Quote])
-async def get_forex_overview(pm: ProviderManager = Depends(get_provider_manager)):
-    """E14. Forex dashboard"""
-    pairs = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "INR=X"]
+async def get_forex_overview():
+    """E14. Forex dashboard (Uses Frankfurter)"""
+    from backend.app.providers.adapters.frankfurter_adapter import FrankfurterAdapter
+    from backend.app.models.domain.market import DataMetadata
+    
+    pairs = ["EUR", "GBP", "JPY", "INR"]
     results = []
+    adapter = FrankfurterAdapter()
     for pair in pairs:
         try:
-            quote = await pm.get_quote(pair)
+            data = await adapter.get_fx_rate(base="USD", symbol=pair)
+            
+            # Map Frankfurter FX to Quote object format so frontend doesn't break
+            meta = DataMetadata(
+                symbol=f"USD{pair}=X",
+                provider="frankfurter",
+                market="FX",
+                currency=pair,
+                timestamp=datetime.now(),
+                retrieved_at=datetime.now(),
+                data_status="REALTIME",
+                source="frankfurter",
+                is_market_open=True
+            )
+            quote = Quote(
+                price=data["rate"],
+                change=0.0,
+                change_percent=0.0,
+                high=data["rate"],
+                low=data["rate"],
+                volume=0.0,
+                meta=meta
+            )
             results.append(quote)
         except:
             pass

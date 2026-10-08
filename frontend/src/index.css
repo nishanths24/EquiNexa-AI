@@ -14,6 +14,21 @@
   --color-market-down: #ef4444;
 }
 
+/* Light Theme Overrides */
+.light-theme {
+  --color-black-bg: #f9fafb;
+  --color-sidebar-bg: #ffffff;
+  --color-header-bg: #ffffff;
+  --color-card-bg: #ffffff;
+  --color-hover-bg: #f3f4f6;
+  --color-border-subtle: #e5e7eb;
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-market-up: #16a34a;
+  --color-market-down: #dc2626;
+}
+
 @layer base {
   body {
     -webkit-font-smoothing: antialiased;

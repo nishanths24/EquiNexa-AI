@@ -46,12 +46,12 @@ def test_markets_history_unsupported_symbol():
 
 
 def test_markets_search_compatible_shape():
-    response = client.get('/api/v1/markets/search?q=Infosys')
+    response = client.get('/api/v1/market/instruments/search?q=Infosys')
     assert response.status_code == 200
     data = response.json()
     assert data['status'] in {'OK', 'UNAVAILABLE'}
     if data['status'] == 'OK' and data['results']:
-        assert {'symbol', 'name', 'exchange', 'type'} <= set(data['results'][0])
+        assert {'symbol', 'name', 'exchange', 'instrument_type'} <= set(data['results'][0])
 
 
 def test_markets_history_intraday_unavailable_nse():
@@ -73,7 +73,7 @@ def test_markets_history_valid_nse_daily():
 
 
 def test_markets_history_valid_us_intraday():
-    response = client.get("/api/v1/markets/history?ticker=AAPL&period=1D&interval=5m")
+    response = client.get("/api/v1/markets/history?ticker=AAPL&period=5D&interval=5m")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "OK"

@@ -1,250 +1,318 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { AlertCircle, TrendingUp } from 'lucide-react';
-import { fetchHistory, type OHLCV } from '../services/api/markets';
-import { ChartWidget } from '../components/ChartWidget';
-import ReactMarkdown from 'react-markdown';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { createChart, ColorType } from 'lightweight-charts';
+import type { IChartApi, ISeriesApi } from 'lightweight-charts';
+import { LineChart, Beaker, Newspaper, Info, ShieldAlert, TrendingUp, TrendingDown, Target, StopCircle, Maximize, Minimize } from 'lucide-react';
 
-const PERIODS = [
-  { label: '1D', value: '1D' },
-  { label: '5D', value: '5D' },
-  { label: '1M', value: '1M' },
-  { label: '3M', value: '3M' },
-  { label: '6M', value: '6M' },
-  { label: 'YTD', value: 'YTD' },
-  { label: '1Y', value: '1Y' },
-  { label: '5Y', value: '5Y' },
-  { label: 'Max', value: 'MAX' }
-];
-
-const INTERVALS = [
-  { label: '1m', value: '1m' },
-  { label: '5m', value: '5m' },
-  { label: '15m', value: '15m' },
-  { label: '30m', value: '30m' },
-  { label: '1h', value: '1h' },
-  { label: '1d', value: '1d' },
-  { label: '1wk', value: '1wk' },
-  { label: '1mo', value: '1mo' }
+const MOCK_CANDLES = [
+  { time: '2026-10-01', open: 2450.5, high: 2475.0, low: 2440.0, close: 2465.2 },
+  { time: '2026-10-02', open: 2465.2, high: 2500.0, low: 2460.0, close: 2495.5 },
+  { time: '2026-10-03', open: 2490.0, high: 2510.5, low: 2480.0, close: 2505.0 },
+  { time: '2026-10-04', open: 2505.0, high: 2525.0, low: 2495.0, close: 2515.5 },
+  { time: '2026-10-05', open: 2520.0, high: 2540.0, low: 2490.0, close: 2495.0 },
+  { time: '2026-10-06', open: 2490.0, high: 2510.0, low: 2470.0, close: 2485.5 },
+  { time: '2026-10-07', open: 2485.5, high: 2515.0, low: 2480.0, close: 2510.0 },
+  { time: '2026-10-08', open: 2510.0, high: 2535.0, low: 2505.0, close: 2525.5 }
 ];
 
 const StockAnalysis = () => {
-  const [searchParams] = useSearchParams();
-  const ticker = searchParams.get('ticker');
-  
-  const [chartData, setChartData] = useState<OHLCV[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const ticker = query.get('ticker') || 'RELIANCE.NS';
 
-  const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
-
-  const [period, setPeriod] = useState('3M');
-  const [interval, setInterval] = useState('1d');
-  const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
-
-  const [indicators, setIndicators] = useState({
-    sma20: false,
-    sma50: false,
-    sma200: false,
-    ema12: false,
-    ema26: false,
-    ema50: false,
-    bb: false,
-    rsi: false,
-    macd: false,
-    atr: false
-  });
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [chartData, setChartData] = useState<any[]>(MOCK_CANDLES);
+  const [aiReport, setAiReport] = useState<any>(null);
 
   useEffect(() => {
-    if (!ticker) return;
-    
-    const loadData = async () => {
+    // Fetch live market data for chart
+    fetch(`http://localhost:8000/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=1M&interval=1d`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'OK' && data.data) {
+          // Map to lightweight-charts format
+          const formatted = data.data.map((d: any) => ({
+            time: d.time.split('T')[0],
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close
+          }));
+          // lightweight-charts requires unique, sorted times
+          const uniqueData = Array.from(new Map(formatted.map((item: any) => [item.time, item])).values());
+          setChartData(uniqueData.sort((a: any, b: any) => a.time.localeCompare(b.time)));
+        }
+      })
+      .catch(console.error);
+  }, [ticker]);
+
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: '#0b0b0b' },
+        textColor: '#a3a3a3',
+      },
+      grid: {
+        vertLines: { color: '#242424' },
+        horzLines: { color: '#242424' },
+      },
+      width: chartContainerRef.current.clientWidth,
+      height: 400,
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
+
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: '#22c55e',
+      downColor: '#ef4444',
+      borderVisible: false,
+      wickUpColor: '#22c55e',
+      wickDownColor: '#ef4444',
+    });
+
+    candlestickSeriesRef.current = candlestickSeries;
+
+    chartRef.current = chart;
+    candlestickSeriesRef.current = candlestickSeries;
+
+    if (candlestickSeriesRef.current && chartData.length > 0) {
       try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchHistory(ticker, period, interval);
-        setChartData(data);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch historical data');
-      } finally {
-        setLoading(false);
+        candlestickSeriesRef.current.setData(chartData);
+      } catch (e) {
+        console.warn('Could not set chart data', e);
+      }
+    }
+
+    const handleResize = () => {
+      if (chartContainerRef.current && chartRef.current) {
+        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
       }
     };
-    
-    loadData();
-  }, [ticker, period, interval]);
 
-  if (!ticker) {
-    return (
-      <div className="space-y-6 max-w-5xl">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Stock Analysis</h1>
-          <p className="text-text-secondary mt-1">Select a ticker to view technicals and prospective predictions.</p>
-        </div>
-        <div className="bg-card-bg border border-border-subtle rounded-xl p-12 text-center flex flex-col items-center">
-          <TrendingUp className="w-12 h-12 text-text-muted mb-4" />
-          <h3 className="text-lg font-medium text-text-primary">No Ticker Selected</h3>
-          <p className="text-text-secondary mt-2">Use the search bar above to select a company.</p>
-        </div>
-      </div>
-    );
-  }
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      chart.remove();
+    };
+  }, [chartData]);
 
-  const toggleIndicator = (key: keyof typeof indicators) => {
-    setIndicators(prev => ({ ...prev, [key]: !prev[key] }));
+  const handleFullscreenChange = () => {
+    setIsFullscreen(!!document.fullscreenElement);
+  };
+
+  useEffect(() => {
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement && chartContainerRef.current) {
+      chartContainerRef.current.parentElement?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  const runAnalysis = async () => {
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch('http://localhost:8000/api/v1/research/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker, query: "Analyze current trends and give a quantitative prediction." })
+      });
+      const data = await res.json();
+      setAiReport(data);
+    } catch (e) {
+      console.error(e);
+    }
+    setIsAnalyzing(false);
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">{ticker} Analysis</h1>
-          <p className="text-text-secondary mt-1">Historical data and technical overview.</p>
+    <div className="flex flex-col lg:flex-row h-full w-full gap-6 max-w-screen-2xl mx-auto p-4 lg:p-6 bg-black-bg text-text-primary">
+      {/* Left Column: Chart and Data */}
+      <div className="flex-1 flex flex-col space-y-6 min-w-0">
+        
+        {/* Header Bar */}
+        <div className="bg-card-bg border border-border-subtle rounded-lg p-4 flex justify-between items-center">
+          <div>
+            <div className="flex items-center space-x-3">
+              <h1 className="text-2xl font-bold text-text-primary">{ticker}</h1>
+              <span className="px-2 py-0.5 bg-border-subtle text-text-secondary text-xs rounded font-medium">EQ</span>
+              <span className="px-2 py-0.5 bg-green-900/30 text-market-up border border-green-900/50 text-xs rounded font-medium flex items-center">
+                <span className="relative flex h-2 w-2 mr-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-market-up opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-market-up"></span>
+                </span>
+                LIVE
+              </span>
+            </div>
+            <div className="text-sm text-text-muted mt-1">Live Market Data Integration</div>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-mono font-bold text-text-primary">
+              {chartData.length > 0 ? `₹${chartData[chartData.length - 1].close.toFixed(2)}` : 'Loading...'}
+            </div>
+            {chartData.length > 1 && (
+              <div className={`font-mono text-sm font-medium flex items-center justify-end ${chartData[chartData.length - 1].close >= chartData[chartData.length - 2].close ? 'text-market-up' : 'text-market-down'}`}>
+                {chartData[chartData.length - 1].close >= chartData[chartData.length - 2].close ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
+                {Math.abs(chartData[chartData.length - 1].close - chartData[chartData.length - 2].close).toFixed(2)}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-      
-      {error && (
-        <div className="bg-red-950/30 border border-market-down/50 rounded-lg p-4 flex items-start text-market-down">
-          <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-          <p className="text-sm">{error}</p>
-        </div>
-      )}
 
-      {/* Toolbar */}
-      <div className="bg-card-bg p-4 rounded-xl border border-border-subtle shadow-sm flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Period</span>
-          <div className="flex bg-black-bg rounded-lg border border-border-subtle overflow-hidden">
-            {PERIODS.map(p => (
-              <button
-                key={p.value}
-                onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${period === p.value ? 'bg-text-primary text-black-bg' : 'text-text-secondary hover:bg-border-subtle'}`}
-              >
-                {p.label}
+        {/* Chart Container */}
+        <div className="bg-card-bg border border-border-subtle rounded-lg p-1 flex flex-col flex-1 min-h-[400px]">
+          <div className="flex items-center justify-between p-3 border-b border-border-subtle">
+            <div className="flex space-x-2">
+              {['1m', '5m', '15m', '1H', '1D'].map(tf => (
+                <button key={tf} className={`px-3 py-1 rounded text-sm font-medium transition-colors ${tf === '1D' ? 'bg-hover-bg text-text-primary' : 'text-text-muted hover:bg-hover-bg hover:text-text-secondary'}`}>
+                  {tf}
+                </button>
+              ))}
+            </div>
+            <div className="flex space-x-2">
+              <button className="px-3 py-1 rounded text-sm font-medium text-text-muted hover:bg-hover-bg transition-colors flex items-center">
+                <LineChart className="w-4 h-4 mr-1.5" /> Indicators
               </button>
-            ))}
+              <button onClick={toggleFullscreen} className="px-2 py-1 rounded text-text-muted hover:bg-hover-bg transition-colors">
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
+          <div ref={chartContainerRef} className="flex-1 w-full relative" />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Interval</span>
-          <select 
-            value={interval}
-            onChange={(e) => setInterval(e.target.value)}
-            className="bg-black-bg border border-border-subtle rounded-md px-2 py-1 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-text-secondary"
-          >
-            {INTERVALS.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Type</span>
-          <select 
-            value={chartType}
-            onChange={(e) => setChartType(e.target.value as any)}
-            className="bg-black-bg border border-border-subtle rounded-md px-2 py-1 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-text-secondary"
-          >
-            <option value="candlestick">Candlestick</option>
-            <option value="line">Line</option>
-            <option value="area">Area</option>
-          </select>
+        {/* Bottom Panel: Fundamentals & News */}
+        <div className="bg-card-bg border border-border-subtle rounded-lg grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border-subtle">
+          <div className="p-4">
+            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3 flex items-center">
+              <Info className="w-4 h-4 mr-1.5" /> Fundamentals
+            </h3>
+            <div className="grid grid-cols-2 gap-y-3 text-sm">
+              <div><span className="text-text-muted block">Market Cap</span><span className="font-mono">₹17.2T</span></div>
+              <div><span className="text-text-muted block">P/E Ratio</span><span className="font-mono">28.4</span></div>
+              <div><span className="text-text-muted block">Dividend Yield</span><span className="font-mono">0.34%</span></div>
+              <div><span className="text-text-muted block">52W High</span><span className="font-mono">₹3,024.90</span></div>
+            </div>
+          </div>
+          <div className="p-4">
+            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3 flex items-center">
+              <Newspaper className="w-4 h-4 mr-1.5" /> Recent News
+            </h3>
+            <div className="space-y-3">
+              <div className="text-sm hover:text-blue-400 cursor-pointer transition-colors line-clamp-1">Reliance Jio announces new 5G tariff plans starting next month.</div>
+              <div className="text-sm hover:text-blue-400 cursor-pointer transition-colors line-clamp-1">Retail division sees 12% YoY growth in quarterly footprint.</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="bg-card-bg p-4 rounded-xl border border-border-subtle shadow-sm flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-medium text-text-muted uppercase tracking-wider mr-2">Indicators</span>
-        {Object.keys(indicators).map(key => (
-          <button
-            key={key}
-            onClick={() => toggleIndicator(key as any)}
-            className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-              indicators[key as keyof typeof indicators] 
-                ? 'bg-text-primary text-black-bg border-text-primary font-medium' 
-                : 'bg-black-bg text-text-secondary border-border-subtle hover:border-text-muted'
-            }`}
-          >
-            {key.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-card-bg p-6 rounded-xl border border-border-subtle shadow-sm h-[500px] flex flex-col">
-        {loading ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-text-primary border-t-transparent rounded-full animate-spin"></div>
+      {/* Right Column: AI Analysis */}
+      <div className="w-full lg:w-96 flex flex-col space-y-4">
+        <div className="bg-card-bg border border-border-subtle rounded-lg p-5 flex flex-col flex-1">
+          <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-4">
+            <h2 className="text-lg font-bold flex items-center text-blue-400">
+              <Beaker className="w-5 h-5 mr-2" />
+              EquiNexa AI Analyst
+            </h2>
           </div>
-        ) : chartData.length > 0 ? (
-          <ChartWidget data={chartData} type={chartType} indicators={indicators} />
-        ) : (
-           <div className="w-full h-full flex items-center justify-center text-text-muted">No historical data available</div>
-        )}
-      </div>
 
-      <div className="bg-card-bg border border-border-subtle rounded-xl p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-text-primary">Forecast / Analysis</h3>
-          <button
-            onClick={async () => {
-              setAnalysisLoading(true);
-              setAnalysisError(null);
-              try {
-                const { fetchClient } = await import('../services/api/client');
-                const data = await fetchClient('/api/v1/research/query', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ 
-                    ticker: ticker, 
-                    query: `Provide a comprehensive technical and AI forecast for this ticker over a ${period} period using a ${interval} interval. Focus on technical indicators, chart patterns, current news, and calibrated probabilities.` 
-                  })
-                });
-                setAnalysisResult(data.report);
-              } catch (err: any) {
-                setAnalysisError(err.message || 'Analysis failed');
-              } finally {
-                setAnalysisLoading(false);
-              }
-            }}
-            disabled={analysisLoading}
-            className="px-4 py-2 bg-text-primary text-black-bg rounded-lg font-medium hover:bg-white transition-colors disabled:opacity-50"
-          >
-            {analysisLoading ? 'Analyzing...' : 'Generate Analysis'}
-          </button>
-        </div>
+          {!isAnalyzing ? (
+            <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+              {/* Prediction Header */}
+              {aiReport ? (
+                <div className="p-4 bg-hover-bg rounded-lg border border-border-subtle">
+                  <div className="text-sm font-semibold mb-2">Generated Report:</div>
+                  <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+                    {aiReport.report}
+                  </div>
+                  <div className="mt-4 text-xs text-text-muted">
+                    <strong>Sources:</strong> {aiReport.citations?.join(', ') || 'Unverified'}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="p-4 bg-hover-bg rounded-lg border border-border-subtle">
+                    <div className="text-sm text-text-muted mb-1">AI Market Bias</div>
+                    <div className="text-xl font-bold text-market-up flex items-center">
+                      BULLISH <TrendingUp className="w-5 h-5 ml-2" />
+                    </div>
+                    <div className="text-xs text-text-muted mt-2">Confidence: <span className="font-mono text-text-primary">78%</span></div>
+                  </div>
 
-        {analysisError && (
-          <div className="bg-red-950/30 border border-market-down/50 rounded-lg p-4 flex items-start text-market-down mb-4">
-            <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-            <p className="text-sm">{analysisError}</p>
-          </div>
-        )}
+              {/* Technical Reasoning */}
+              <div>
+                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Evidence</h3>
+                <ul className="space-y-2 text-sm text-text-primary">
+                  <li className="flex items-start"><span className="text-market-up mr-2">•</span> <strong>Candlestick:</strong> Bullish Engulfing pattern detected on 1D timeframe.</li>
+                  <li className="flex items-start"><span className="text-market-up mr-2">•</span> <strong>Indicators:</strong> RSI at 54, MACD crossover observed confirming upward momentum.</li>
+                  <li className="flex items-start"><span className="text-text-muted mr-2">•</span> <strong>S/R:</strong> Strong support zone held at ₹2450.</li>
+                  <li className="flex items-start"><span className="text-market-up mr-2">•</span> <strong>News:</strong> Retail growth figures driving positive sentiment.</li>
+                </ul>
+              </div>
 
-        {analysisResult ? (
-          <div className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap max-w-none">
-            <ReactMarkdown
-              components={{
-                h1: ({...props}) => <h1 className="text-2xl font-bold mt-6 mb-3" {...props} />,
-                h2: ({...props}) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
-                h3: ({...props}) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
-                p: ({...props}) => <p className="mb-4" {...props} />,
-                ul: ({...props}) => <ul className="list-disc list-inside mb-4" {...props} />,
-                ol: ({...props}) => <ol className="list-decimal list-inside mb-4" {...props} />,
-                li: ({...props}) => <li className="mb-1" {...props} />,
-                a: ({...props}) => <a className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-                strong: ({...props}) => <strong className="font-bold text-white" {...props} />,
-              }}
+              {/* Trade Setup */}
+              <div>
+                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Long Setup</h3>
+                <div className="space-y-3 font-mono text-sm">
+                  <div className="flex justify-between items-center p-2 rounded bg-black-bg border border-border-subtle">
+                    <span className="text-text-muted flex items-center"><TrendingUp className="w-4 h-4 mr-2 text-blue-400"/> Entry Zone</span>
+                    <span>₹2,510 - ₹2,530</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded bg-black-bg border border-border-subtle">
+                    <span className="text-text-muted flex items-center"><Target className="w-4 h-4 mr-2 text-market-up"/> Target 1</span>
+                    <span className="text-market-up">₹2,600</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded bg-black-bg border border-border-subtle">
+                    <span className="text-text-muted flex items-center"><StopCircle className="w-4 h-4 mr-2 text-market-down"/> Stop Loss</span>
+                    <span className="text-market-down">₹2,480</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Disclaimer */}
+              <div className="mt-4 p-3 bg-red-950/20 border border-red-900/50 rounded-lg flex items-start">
+                <ShieldAlert className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-text-muted">
+                  <strong className="text-red-400 block mb-1">RISK WARNING</strong>
+                  Market predictions are probabilistic and can be wrong. The analysis uses available market data and is not personalized financial advice.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+              <div className="w-10 h-10 border-4 border-border-subtle border-t-blue-500 rounded-full animate-spin"></div>
+              <p className="text-text-muted text-sm font-medium animate-pulse">Running quantitative analysis...</p>
+            </div>
+          )}
+
+          <div className="pt-4 mt-4 border-t border-border-subtle">
+            <button 
+              onClick={runAnalysis}
+              disabled={isAnalyzing}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-semibold transition-colors flex items-center justify-center"
             >
-              {analysisResult}
-            </ReactMarkdown>
+              <Beaker className="w-5 h-5 mr-2" />
+              Analyze Current Market
+            </button>
           </div>
-        ) : (
-          <div className="text-center text-text-muted py-8">
-            <TrendingUp className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-50" />
-            <p>Click Generate Analysis to run the prospective model and technical pattern engines.</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

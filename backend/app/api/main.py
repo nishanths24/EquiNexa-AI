@@ -605,7 +605,7 @@ async def analyze_chart(
     except Exception as e:
         error_str = str(e).lower()
         if "429" in error_str or "quota" in error_str or "rate limit" in error_str:
-            raise HTTPException(status_code=429, detail="AI Analysis is currently unavailable due to provider rate limits. Please try again later.")
+            raise HTTPException(status_code=429, detail="Quota exceeded. AI Analysis is currently unavailable due to provider rate limits. Please try again later.")
         raise HTTPException(status_code=500, detail=f"Provider returned malformed JSON or an unexpected error occurred: {str(e)}")
 
 @app.post("/api/v1/research/query")
@@ -1094,8 +1094,12 @@ app.include_router(market_overview_router, prefix="/api/v2", tags=["V2 Market Ov
 app.include_router(admin_router, prefix="/api/v2")
 app.include_router(stream_router, prefix="/api/v2")
 
+from backend.app.api.v2.api import api_router as v2_router
+app.include_router(v2_router, prefix="/api/v2")
+
 if __name__ == "__main__":
     import uvicorn
     import os
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("backend.app.api.main:app", host="0.0.0.0", port=port, reload=False)
+
