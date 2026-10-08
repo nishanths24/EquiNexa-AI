@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, LayoutDashboard, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, DollarSign, Globe, Filter, Star, Bell, Briefcase, User, Shield, Menu, X, ChevronDown, Home } from 'lucide-react';
+import { Activity, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, DollarSign, Globe, Filter, Star, Bell, ChevronDown, Home } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { searchMarkets, type SearchResult } from '../../services/api/markets';
 
