@@ -1087,13 +1087,6 @@ def verify_ledger_chain():
     return {"status": "ok", "chain_valid": is_valid}
 
 # V2 Routers
-from backend.app.api.v2.routers.market_overview import router as market_overview_router
-from backend.app.api.v2.routers.admin import router as admin_router
-from backend.app.api.v2.routers.stream import router as stream_router
-app.include_router(market_overview_router, prefix="/api/v2", tags=["V2 Market Overview"])
-app.include_router(admin_router, prefix="/api/v2")
-app.include_router(stream_router, prefix="/api/v2")
-
 from backend.app.api.v2.api import api_router as v2_router
 app.include_router(v2_router, prefix="/api/v2")
 

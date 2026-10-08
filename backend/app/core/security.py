@@ -8,7 +8,7 @@ from typing import Dict, Tuple
 _rate_limits: Dict[str, Tuple[int, float]] = {}
 
 WINDOW_SIZE_SECONDS = 60
-ANONYMOUS_LIMIT = 3000
+ANONYMOUS_LIMIT = 30
 AUTH_LIMIT = 100
 
 def check_rate_limit(request: Request):
