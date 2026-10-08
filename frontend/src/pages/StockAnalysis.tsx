@@ -27,28 +27,47 @@ const StockAnalysis = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [chartData, setChartData] = useState<any[]>(MOCK_CANDLES);
   const [aiReport, setAiReport] = useState<any>(null);
+  const [timeframe, setTimeframe] = useState('1D');
 
   useEffect(() => {
+    // Map timeframe to yfinance period/interval
+    const tfMap: Record<string, { period: string, interval: string }> = {
+      '1m': { period: '5d', interval: '1m' },
+      '5m': { period: '5d', interval: '5m' },
+      '15m': { period: '1mo', interval: '15m' },
+      '1H': { period: '3mo', interval: '1h' },
+      '1D': { period: '1y', interval: '1d' }
+    };
+    const { period, interval } = tfMap[timeframe] || tfMap['1D'];
+
     // Fetch live market data for chart
-    fetch(`http://localhost:8000/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=1M&interval=1d`)
+    fetch(`http://localhost:8000/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=${period}&interval=${interval}`)
       .then(res => res.json())
       .then(data => {
         if (data.status === 'OK' && data.data) {
           // Map to lightweight-charts format
-          const formatted = data.data.map((d: any) => ({
-            time: d.time.split('T')[0],
-            open: d.open,
-            high: d.high,
-            low: d.low,
-            close: d.close
-          }));
+          const formatted = data.data.map((d: any) => {
+            const isDaily = interval === '1d';
+            // Use 'YYYY-MM-DD' for daily to avoid timezone shifts, else unix timestamp for intraday
+            const timeValue = isDaily ? d.time.split('T')[0] : (new Date(d.time).getTime() / 1000);
+            return {
+              time: timeValue,
+              open: d.open,
+              high: d.high,
+              low: d.low,
+              close: d.close
+            };
+          });
           // lightweight-charts requires unique, sorted times
           const uniqueData = Array.from(new Map(formatted.map((item: any) => [item.time, item])).values());
-          setChartData(uniqueData.sort((a: any, b: any) => a.time.localeCompare(b.time)));
+          setChartData(uniqueData.sort((a: any, b: any) => {
+            if (typeof a.time === 'string') return a.time.localeCompare(b.time);
+            return a.time - b.time;
+          }));
         }
       })
       .catch(console.error);
-  }, [ticker]);
+  }, [ticker, timeframe]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -179,7 +198,11 @@ const StockAnalysis = () => {
           <div className="flex items-center justify-between p-3 border-b border-border-subtle">
             <div className="flex space-x-2">
               {['1m', '5m', '15m', '1H', '1D'].map(tf => (
-                <button key={tf} className={`px-3 py-1 rounded text-sm font-medium transition-colors ${tf === '1D' ? 'bg-hover-bg text-text-primary' : 'text-text-muted hover:bg-hover-bg hover:text-text-secondary'}`}>
+                <button 
+                  key={tf} 
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${tf === timeframe ? 'bg-hover-bg text-text-primary' : 'text-text-muted hover:bg-hover-bg hover:text-text-secondary'}`}
+                >
                   {tf}
                 </button>
               ))}

@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, LayoutDashboard, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, DollarSign, Globe, Filter, Star, Bell, Briefcase, User, Shield, Menu, X } from 'lucide-react';
+import { Activity, LayoutDashboard, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, DollarSign, Globe, Filter, Star, Bell, Briefcase, User, Shield, Menu, X, ChevronDown, Home } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { searchMarkets, type SearchResult } from '../../services/api/markets';
 
@@ -11,15 +11,18 @@ const AppLayout = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [toolsOpen, setToolsOpen] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
+  const toolsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setSearchOpen(false);
+      }
+      if (toolsRef.current && !toolsRef.current.contains(event.target as Node)) {
+        setToolsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -62,156 +65,141 @@ const AppLayout = () => {
   };
 
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Markets', path: '/markets', icon: Activity },
     { name: 'Stock Analysis', path: '/analysis', icon: LineChart },
-    { name: 'Chart Workspace', path: '/chart', icon: ImageIcon },
     { name: 'AI Analyst', path: '/ai', icon: Beaker },
+  ];
+
+  const toolItems = [
+    { name: 'Chart Workspace', path: '/chart', icon: ImageIcon },
+    { name: 'Watchlist', path: '/watchlist', icon: Star },
+    { name: 'Alerts', path: '/alerts', icon: Bell },
+    { name: 'Screener', path: '/screener', icon: Filter },
     { name: 'News', path: '/news', icon: FileText },
     { name: 'Forex', path: '/forex', icon: DollarSign },
     { name: 'Macro', path: '/macro', icon: Globe },
-    { name: 'Screener', path: '/screener', icon: Filter },
-    { name: 'Watchlist', path: '/watchlist', icon: Star },
-    { name: 'Alerts', path: '/alerts', icon: Bell },
-    { name: 'Portfolio', path: '/portfolio', icon: Briefcase },
-    { name: 'Profile', path: '/profile', icon: User },
-    { name: 'Settings', path: '/settings', icon: Settings },
-    { name: 'Admin', path: '/admin', icon: Shield },
   ];
 
   return (
-    <div className="min-h-screen flex bg-black-bg text-text-primary selection:bg-border-subtle selection:text-text-primary overflow-hidden">
-      {/* Sidebar */}
-      {sidebarOpen && (
-      <aside className="w-64 bg-sidebar-bg border-r border-border-subtle hidden md:flex flex-col shrink-0 h-screen overflow-y-auto">
-        <div className="h-16 flex items-center px-6 border-b border-border-subtle shrink-0">
-          <Activity className="w-6 h-6 text-text-primary mr-2" />
-          <span className="font-bold text-xl tracking-tight text-text-primary">EquiNexa AI</span>
+    <div className="min-h-screen flex flex-col bg-black-bg text-text-primary selection:bg-border-subtle selection:text-text-primary overflow-hidden">
+      {/* Top Header Navigation */}
+      <header className="h-16 bg-header-bg border-b border-border-subtle flex items-center justify-between px-4 md:px-6 shrink-0 z-40">
+        <div className="flex items-center space-x-4">
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <Activity className="w-6 h-6 text-blue-500 mr-2" />
+            <span className="font-bold text-xl tracking-tight text-text-primary hidden sm:block">EquiNexa AI</span>
+          </Link>
+          
+          {/* Global Search */}
+          <div className="relative ml-2 sm:ml-4" ref={searchRef}>
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+               {searching ? (
+                 <div className="w-4 h-4 border-2 border-text-muted border-t-transparent rounded-full animate-spin"></div>
+               ) : (
+                 <Search className="w-4 h-4 text-text-muted" />
+               )}
+            </div>
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
+              placeholder="Search for Anything [Ctrl + S]" 
+              className="pl-10 pr-4 py-2 w-48 sm:w-64 lg:w-80 bg-card-bg border border-border-subtle rounded-md text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-text-secondary transition-shadow"
+            />
+            
+            {searchOpen && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 w-full bg-card-bg border border-border-subtle rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
+                {searchResults.map((result) => (
+                  <button
+                    key={result.symbol}
+                    onClick={() => handleSelectSymbol(result.symbol)}
+                    className="w-full text-left px-4 py-3 border-b border-border-subtle hover:bg-hover-bg transition-colors last:border-b-0 flex flex-col"
+                  >
+                    <div className="flex justify-between items-start">
+                      <span className="font-semibold text-text-primary">{result.symbol}</span>
+                      <span className="text-xs text-text-muted bg-border-subtle px-1 rounded">{result.exchange}</span>
+                    </div>
+                    <span className="text-xs text-text-secondary truncate block mt-0.5">{result.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <nav className="p-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = location.pathname === item.path;
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                  active 
-                    ? 'bg-hover-bg text-text-primary font-medium' 
-                    : 'text-text-secondary hover:bg-hover-bg hover:text-text-primary'
+
+        {/* Center/Right Navigation Links */}
+        <div className="flex items-center space-x-1 lg:space-x-4">
+          <Link to="/" className={`hidden lg:flex p-2 rounded-lg transition-colors ${location.pathname === '/' ? 'text-blue-400' : 'text-text-secondary hover:text-text-primary hover:bg-hover-bg'}`}>
+            <Home className="w-5 h-5" />
+          </Link>
+          
+          <nav className="hidden md:flex items-center space-x-1">
+            {navItems.map((item) => {
+              const active = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    active 
+                      ? 'text-blue-400 bg-hover-bg/50' 
+                      : 'text-text-secondary hover:bg-hover-bg hover:text-text-primary'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
+            
+            {/* Tools Dropdown */}
+            <div className="relative" ref={toolsRef}>
+              <button 
+                onClick={() => setToolsOpen(!toolsOpen)}
+                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  toolsOpen ? 'text-text-primary bg-hover-bg' : 'text-text-secondary hover:bg-hover-bg hover:text-text-primary'
                 }`}
               >
-                <Icon className="w-5 h-5 mr-3" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-      )}
-
-      {/* Mobile Sidebar Overlay */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-black-bg/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
-          <aside className="relative flex-1 flex flex-col max-w-xs w-full bg-sidebar-bg border-r border-border-subtle z-50 overflow-y-auto">
-            <div className="h-16 flex items-center justify-between px-6 border-b border-border-subtle">
-              <div className="flex items-center">
-                <Activity className="w-6 h-6 text-text-primary mr-2" />
-                <span className="font-bold text-xl tracking-tight text-text-primary">EquiNexa AI</span>
-              </div>
-              <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-text-secondary hover:text-text-primary">
-                <X className="w-6 h-6" />
+                Tools <ChevronDown className="w-4 h-4 ml-1" />
               </button>
+              
+              {toolsOpen && (
+                <div className="absolute top-full right-0 mt-1 w-48 bg-card-bg border border-border-subtle rounded-md shadow-lg py-1 z-50">
+                  {toolItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      onClick={() => setToolsOpen(false)}
+                      className="flex items-center px-4 py-2 text-sm text-text-secondary hover:bg-hover-bg hover:text-text-primary transition-colors"
+                    >
+                      <item.icon className="w-4 h-4 mr-3" />
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-            <nav className="p-4 space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                      active 
-                        ? 'bg-hover-bg text-text-primary font-medium' 
-                        : 'text-text-secondary hover:bg-hover-bg hover:text-text-primary'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 mr-3" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
-          </aside>
+          </nav>
+
+          <div className="flex items-center space-x-2 pl-2 lg:pl-4 border-l border-border-subtle ml-2 lg:ml-4">
+            <button className="p-2 rounded-full hover:bg-hover-bg transition-colors text-text-secondary" aria-label="Notifications">
+              <Bell className="w-5 h-5" />
+            </button>
+            <button onClick={() => navigate('/settings')} className="p-2 rounded-full hover:bg-hover-bg transition-colors text-text-secondary" aria-label="Settings">
+              <Settings className="w-5 h-5" />
+            </button>
+            <button onClick={() => navigate('/profile')} className="ml-1 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white hover:bg-blue-700 transition-colors">
+              NS
+            </button>
+          </div>
         </div>
-      )}
+      </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full h-screen overflow-hidden">
-        <header className="h-16 bg-header-bg border-b border-border-subtle flex items-center justify-between px-4 md:px-6 shrink-0">
-          <div className="flex items-center">
-            {/* Mobile Toggle */}
-            <button className="md:hidden p-2 mr-2 text-text-secondary hover:text-text-primary" onClick={() => setMobileMenuOpen(true)}>
-              <Menu className="w-6 h-6" />
-            </button>
-            {/* Desktop Toggle */}
-            <button className="hidden md:block p-2 mr-4 text-text-secondary hover:text-text-primary transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="text-sm font-medium text-text-secondary hidden sm:block">Market Session: <span className="text-market-up">Open</span></div>
-          </div>
-          <div className="flex items-center space-x-2 md:space-x-4">
-             {/* Global Search */}
-             <div className="relative" ref={searchRef}>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                   {searching ? (
-                     <div className="w-4 h-4 border-2 border-text-muted border-t-transparent rounded-full animate-spin"></div>
-                   ) : (
-                     <Search className="w-4 h-4 text-text-muted" />
-                   )}
-                </div>
-                <input 
-                  type="text" 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-                  placeholder="Search ticker or company..." 
-                  className="pl-10 pr-4 py-2 w-64 bg-card-bg border border-border-subtle rounded-md text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-text-secondary transition-shadow"
-                />
-                
-                {searchOpen && searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 mt-1 w-full bg-card-bg border border-border-subtle rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
-                    {searchResults.map((result) => (
-                      <button
-                        key={result.symbol}
-                        onClick={() => handleSelectSymbol(result.symbol)}
-                        className="w-full text-left px-4 py-3 border-b border-border-subtle hover:bg-hover-bg transition-colors last:border-b-0 flex flex-col"
-                      >
-                        <div className="flex justify-between items-start">
-                          <span className="font-semibold text-text-primary">{result.symbol}</span>
-                          <span className="text-xs text-text-muted bg-border-subtle px-1 rounded">{result.exchange}</span>
-                        </div>
-                        <span className="text-xs text-text-secondary truncate block mt-0.5">{result.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-             </div>
-              <button onClick={() => navigate('/settings')} className="p-2 rounded-full hover:bg-hover-bg transition-colors" aria-label="Settings">
-                <Settings className="w-5 h-5 text-text-secondary" />
-              </button>
-          </div>
-        </header>
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 overflow-y-auto">
+        <Outlet />
+      </main>
     </div>
   );
 };
