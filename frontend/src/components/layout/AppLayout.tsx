@@ -101,13 +101,13 @@ const AppLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-black-bg text-text-primary selection:bg-border-subtle selection:text-text-primary overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-eq-bg text-eq-text overflow-hidden w-full min-w-0">
       {/* Top Header Navigation */}
       <header className="h-16 bg-header-bg border-b border-border-subtle flex items-center justify-between px-4 md:px-6 shrink-0 z-40">
         <div className="flex items-center space-x-4">
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <Activity className="w-6 h-6 text-blue-500 mr-2" />
-            <span className="font-bold text-xl tracking-tight text-text-primary hidden sm:block">EquiNexa AI</span>
+            <Activity className="w-6 h-6 text-eq-purple mr-2" />
+            <span className="font-semibold text-xl tracking-tight text-eq-text hidden sm:block">EquiNexa AI</span>
           </Link>
           
           {/* Global Search */}
@@ -126,7 +126,7 @@ const AppLayout = () => {
               onKeyDown={handleKeyDown}
               onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
               placeholder="Search for Anything [Ctrl + S]" 
-              className="pl-10 pr-4 py-2 w-48 sm:w-64 lg:w-80 bg-card-bg border border-border-subtle rounded-md text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-text-secondary transition-shadow"
+              className="pl-10 pr-4 py-2 w-48 sm:w-64 lg:w-80 bg-eq-surface-card border border-eq-border rounded text-sm text-eq-text placeholder:text-eq-text-muted focus:outline-none focus:ring-1 focus:ring-eq-purple transition-shadow"
             />
             
             {searchOpen && searchResults.length > 0 && (
@@ -151,7 +151,7 @@ const AppLayout = () => {
 
         {/* Center/Right Navigation Links */}
         <div className="flex items-center space-x-1 lg:space-x-6">
-          <Link to="/" className={`hidden lg:flex p-2 transition-colors ${location.pathname === '/' ? 'text-eq-blue' : 'text-eq-text-secondary hover:text-eq-text'}`}>
+          <Link to="/" className={`hidden lg:flex p-2 transition-colors ${location.pathname === '/' ? 'text-eq-purple' : 'text-eq-text-secondary hover:text-eq-text'}`}>
             <Home className="w-5 h-5" />
           </Link>
           
@@ -164,12 +164,12 @@ const AppLayout = () => {
                   to={item.path}
                   className={`relative flex items-center h-16 text-sm font-medium transition-colors ${
                     active 
-                      ? 'text-eq-blue' 
+                      ? 'text-eq-purple' 
                       : 'text-eq-text-secondary hover:text-eq-text'
                   }`}
                 >
                   {item.name}
-                  {active && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-eq-blue"></span>}
+                  {active && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-eq-purple"></span>}
                 </Link>
               );
             })}
@@ -210,7 +210,7 @@ const AppLayout = () => {
               <Settings className="w-5 h-5" />
             </button>
             {user ? (
-              <button onClick={() => navigate('/profile')} className="ml-2 w-8 h-8 rounded-full bg-eq-blue flex items-center justify-center text-xs font-bold text-eq-text hover:bg-eq-blue-hover transition-colors">
+              <button onClick={() => navigate('/profile')} className="ml-2 w-8 h-8 rounded-full bg-eq-purple flex items-center justify-center text-[12px] font-semibold text-white hover:bg-eq-purple-hover transition-colors">
                 {getInitials(user)}
               </button>
             ) : (

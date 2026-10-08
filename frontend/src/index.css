@@ -1,34 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-eq-bg: #09090b;
-  --color-eq-surface: #121214;
-  --color-eq-surface-elevated: #1a1a1e;
-  --color-eq-border: #27272a;
-  --color-eq-border-active: #3f3f46;
+  --color-eq-bg: #FFFFFF;
+  --color-eq-surface: #FAFAFA;
+  --color-eq-surface-card: #FFFFFF;
+  --color-eq-surface-elevated: #F8F8FA;
+  --color-eq-border: #E4E4E7;
+  --color-eq-border-active: #D4D4D8;
   
-  --color-eq-blue: #2563eb;
-  --color-eq-blue-hover: #1d4ed8;
-  --color-eq-blue-muted: #1e3a8a;
+  --color-eq-purple: #5B2A91;
+  --color-eq-purple-hover: #4F2380;
+  --color-eq-purple-muted: rgba(91, 42, 145, 0.08);
   
-  --color-eq-green: #16a34a;
-  --color-eq-green-muted: rgba(22, 163, 74, 0.15);
+  --color-eq-green: #159447;
+  --color-eq-green-muted: rgba(21, 148, 71, 0.1);
   
-  --color-eq-red: #dc2626;
-  --color-eq-red-muted: rgba(220, 38, 38, 0.15);
+  --color-eq-red: #D6453D;
+  --color-eq-red-muted: rgba(214, 69, 61, 0.1);
   
-  --color-eq-orange: #ea580c;
-  --color-eq-orange-muted: rgba(234, 88, 12, 0.15);
+  --color-eq-orange: #D97706;
+  --color-eq-orange-muted: rgba(217, 119, 6, 0.1);
   
-  --color-eq-text: #f4f4f5;
-  --color-eq-text-secondary: #a1a1aa;
-  --color-eq-text-muted: #71717a;
+  --color-eq-text: #171717;
+  --color-eq-text-secondary: #555A62;
+  --color-eq-text-muted: #7A7F87;
+  --color-eq-text-disabled: #A0A4AA;
 
-  /* Map old variables for compatibility while we transition */
+  /* Legacy Map */
   --color-black-bg: var(--color-eq-bg);
   --color-sidebar-bg: var(--color-eq-surface);
   --color-header-bg: var(--color-eq-surface);
-  --color-card-bg: var(--color-eq-surface);
+  --color-card-bg: var(--color-eq-surface-card);
   --color-hover-bg: var(--color-eq-surface-elevated);
   --color-border-subtle: var(--color-eq-border);
   --color-text-primary: var(--color-eq-text);
@@ -44,6 +47,15 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--color-eq-bg);
     color: var(--color-eq-text);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
+}
+
+/* Base structural fixes */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }

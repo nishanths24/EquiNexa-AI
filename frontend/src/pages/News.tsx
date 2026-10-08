@@ -83,15 +83,15 @@ const News = () => {
   };
 
   const getSentimentColor = (score: number) => {
-    if (score > 0.1) return "text-market-up bg-green-900/20 border-green-900/50";
-    if (score < -0.1) return "text-market-down bg-red-900/20 border-red-900/50";
-    return "text-text-secondary bg-border-subtle/50 border-border-subtle";
+    if (score > 0.1) return "text-eq-green bg-transparent border-transparent";
+    if (score < -0.1) return "text-eq-red bg-transparent border-transparent";
+    return "text-eq-text-secondary bg-transparent border-transparent";
   };
 
   const getImportanceBadge = (importance: string) => {
     if (importance === "HIGH") {
       return (
-        <span className="flex items-center text-xs font-bold text-red-500 bg-red-950/30 px-2 py-0.5 rounded border border-red-900/50">
+        <span className="flex items-center text-[11px] font-medium text-[#D6453D] bg-[#FFF5F4] px-1.5 py-0.5 rounded border border-[#D6453D]">
           <AlertTriangle className="w-3 h-3 mr-1" />
           HIGH IMPACT
         </span>
@@ -106,8 +106,8 @@ const News = () => {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">News Terminal</h1>
-          <p className="text-sm text-text-muted mt-1">Real-time global market news, sentiment analysis, and corporate actions.</p>
+          <h1 className="text-xl font-semibold text-eq-text">News Terminal</h1>
+          <p className="text-[13px] text-eq-text-secondary mt-1">Real-time global market news, sentiment analysis, and corporate actions.</p>
         </div>
         
         <div className="relative w-full md:w-72">
@@ -125,19 +125,19 @@ const News = () => {
       </div>
 
       {/* Categories Bar */}
-      <div className="flex items-center overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide space-x-2">
-        <div className="flex items-center mr-2 text-text-muted">
-          <Filter className="w-4 h-4 mr-2" />
-          <span className="text-sm font-medium">Filter:</span>
+      <div className="flex flex-row md:flex-wrap items-center overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 space-x-2 md:space-x-0 md:gap-2 scrollbar-hide w-full min-w-0">
+        <div className="flex items-center text-eq-text-muted shrink-0 md:mr-2">
+          <Filter className="w-4 h-4 mr-1" />
+          <span className="text-[13px] font-medium">Filter:</span>
         </div>
         {MOCK_CATEGORIES.map(category => (
           <button
             key={category}
             onClick={() => setActiveCategory(category)}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+            className={`whitespace-nowrap px-3 py-1 rounded text-[13px] font-medium transition-colors border ${
               activeCategory === category 
-                ? 'bg-hover-bg text-text-primary border-text-secondary' 
-                : 'bg-transparent text-text-muted border-border-subtle hover:bg-card-bg hover:text-text-secondary'
+                ? 'bg-eq-purple text-white border-eq-purple' 
+                : 'bg-transparent text-eq-text-secondary border-eq-border hover:bg-eq-surface-elevated hover:text-eq-text'
             }`}
           >
             {category}
@@ -152,11 +152,8 @@ const News = () => {
         <div className="lg:col-span-3 flex flex-col space-y-4 overflow-y-auto pr-2 pb-10">
           
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold flex items-center">
-              <span className="relative flex h-2 w-2 mr-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-market-up opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-market-up"></span>
-              </span>
+            <h2 className="text-[14px] font-semibold flex items-center text-eq-text">
+              <span className="flex h-1.5 w-1.5 mr-2 rounded-full bg-eq-green"></span>
               Live Feed
             </h2>
             <span className="text-xs text-text-muted">Showing {filteredNews.length} articles</span>
@@ -170,11 +167,11 @@ const News = () => {
             </div>
           ) : (
             filteredNews.map(article => (
-              <div key={article.id} className="bg-card-bg border border-border-subtle rounded-lg p-5 hover:border-text-muted transition-colors cursor-pointer group">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center space-x-3 text-xs">
-                    <span className="font-semibold text-text-secondary">{article.source}</span>
-                    <span className="text-text-muted flex items-center">
+              <div key={article.id} className="bg-eq-surface-card border border-eq-border rounded p-4 hover:border-eq-purple/40 transition-colors cursor-pointer group">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center space-x-3 text-[12px]">
+                    <span className="font-semibold text-eq-text-secondary">{article.source}</span>
+                    <span className="text-eq-text-muted flex items-center">
                       <Clock className="w-3 h-3 mr-1" />
                       {article.published_at}
                     </span>
@@ -182,25 +179,25 @@ const News = () => {
                   {getImportanceBadge(article.importance)}
                 </div>
                 
-                <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-blue-400 transition-colors">
+                <h3 className="text-[16px] font-semibold text-eq-text mb-2 group-hover:text-eq-purple transition-colors">
                   {article.headline}
                 </h3>
                 
-                <p className="text-sm text-text-muted mb-4 line-clamp-2 leading-relaxed">
+                <p className="text-[14px] text-eq-text-secondary mb-4 line-clamp-2 leading-relaxed">
                   {article.summary}
                 </p>
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     {article.symbols.map(sym => (
-                      <span key={sym} className="px-2 py-1 bg-black-bg border border-border-subtle rounded text-xs font-mono text-text-secondary">
+                      <span key={sym} className="px-1.5 py-0.5 bg-eq-surface-elevated border border-eq-border rounded text-[11px] text-eq-text-secondary">
                         {sym}
                       </span>
                     ))}
                   </div>
                   
                   <div className="flex items-center space-x-4">
-                    <div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${getSentimentColor(article.sentiment)}`}>
+                    <div className={`flex items-center space-x-1 px-2 py-1 rounded border text-[12px] font-medium ${getSentimentColor(article.sentiment)}`}>
                       {getSentimentIcon(article.sentiment)}
                       <span>
                         {article.sentiment > 0.1 ? 'Positive' : article.sentiment < -0.1 ? 'Negative' : 'Neutral'}

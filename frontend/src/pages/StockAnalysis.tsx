@@ -90,12 +90,12 @@ const StockAnalysis = () => {
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#121214' }, // eq-surface
-        textColor: '#a1a1aa', // eq-text-secondary
+        background: { type: ColorType.Solid, color: '#FFFFFF' },
+        textColor: '#555A62', 
       },
       grid: {
-        vertLines: { color: 'rgba(39, 39, 42, 0.5)' }, // very subtle eq-border
-        horzLines: { color: 'rgba(39, 39, 42, 0.5)' },
+        vertLines: { color: '#EEEEEE' },
+        horzLines: { color: '#EEEEEE' },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -109,16 +109,16 @@ const StockAnalysis = () => {
         barSpacing: 8,
       },
       rightPriceScale: {
-        borderColor: '#27272a', // eq-border
+        borderColor: '#E4E4E7',
       }
     });
 
     const candlestickSeries = chart.addCandlestickSeries({
-      upColor: '#16a34a',
-      downColor: '#dc2626',
+      upColor: '#159447',
+      downColor: '#D6453D',
       borderVisible: false,
-      wickUpColor: '#16a34a',
-      wickDownColor: '#dc2626',
+      wickUpColor: '#159447',
+      wickDownColor: '#D6453D',
     });
 
     const volumeSeries = chart.addHistogramSeries({
@@ -170,18 +170,21 @@ const StockAnalysis = () => {
       }
     });
 
-    const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
+    const resizeObserver = new ResizeObserver(entries => {
+      if (entries.length === 0 || entries[0].target !== chartContainerRef.current) { return; }
+      const newRect = entries[0].contentRect;
+      if (chartRef.current) {
         chartRef.current.applyOptions({ 
-            width: chartContainerRef.current.clientWidth,
-            height: chartContainerRef.current.clientHeight 
+            width: newRect.width,
+            height: newRect.height 
         });
       }
-    };
+    });
+    
+    resizeObserver.observe(chartContainerRef.current);
 
-    window.addEventListener('resize', handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       chart.remove();
     };
