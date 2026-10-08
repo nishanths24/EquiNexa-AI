@@ -150,50 +150,50 @@ const AppLayout = () => {
         </div>
 
         {/* Center/Right Navigation Links */}
-        <div className="flex items-center space-x-1 lg:space-x-4">
-          <Link to="/" className={`hidden lg:flex p-2 rounded-lg transition-colors ${location.pathname === '/' ? 'text-blue-400' : 'text-text-secondary hover:text-text-primary hover:bg-hover-bg'}`}>
+        <div className="flex items-center space-x-1 lg:space-x-6">
+          <Link to="/" className={`hidden lg:flex p-2 transition-colors ${location.pathname === '/' ? 'text-eq-blue' : 'text-eq-text-secondary hover:text-eq-text'}`}>
             <Home className="w-5 h-5" />
           </Link>
           
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden md:flex items-center space-x-6 h-full">
             {navItems.map((item) => {
               const active = location.pathname === item.path;
               return (
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`relative flex items-center h-16 text-sm font-medium transition-colors ${
                     active 
-                      ? 'text-blue-400 bg-hover-bg/50' 
-                      : 'text-text-secondary hover:bg-hover-bg hover:text-text-primary'
+                      ? 'text-eq-blue' 
+                      : 'text-eq-text-secondary hover:text-eq-text'
                   }`}
                 >
                   {item.name}
+                  {active && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-eq-blue"></span>}
                 </Link>
               );
             })}
             
             {/* Tools Dropdown */}
-            <div className="relative" ref={toolsRef}>
+            <div className="relative flex items-center h-full" ref={toolsRef}>
               <button 
                 onClick={() => setToolsOpen(!toolsOpen)}
-                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  toolsOpen ? 'text-text-primary bg-hover-bg' : 'text-text-secondary hover:bg-hover-bg hover:text-text-primary'
+                className={`flex items-center text-sm font-medium transition-colors h-16 ${
+                  toolsOpen ? 'text-eq-text' : 'text-eq-text-secondary hover:text-eq-text'
                 }`}
               >
                 Tools <ChevronDown className="w-4 h-4 ml-1" />
               </button>
               
               {toolsOpen && (
-                <div className="absolute top-full right-0 mt-1 w-48 bg-card-bg border border-border-subtle rounded-md shadow-lg py-1 z-50">
+                <div className="absolute top-14 right-0 mt-1 w-48 bg-eq-surface border border-eq-border rounded shadow-lg py-1 z-50">
                   {toolItems.map((item) => (
                     <Link
                       key={item.name}
                       to={item.path}
                       onClick={() => setToolsOpen(false)}
-                      className="flex items-center px-4 py-2 text-sm text-text-secondary hover:bg-hover-bg hover:text-text-primary transition-colors"
+                      className="flex items-center px-4 py-2 text-sm text-eq-text-secondary hover:bg-eq-surface-elevated hover:text-eq-text transition-colors"
                     >
-                      <item.icon className="w-4 h-4 mr-3" />
                       {item.name}
                     </Link>
                   ))}
@@ -202,19 +202,19 @@ const AppLayout = () => {
             </div>
           </nav>
 
-          <div className="flex items-center space-x-2 pl-2 lg:pl-4 border-l border-border-subtle ml-2 lg:ml-4">
-            <button className="p-2 rounded-full hover:bg-hover-bg transition-colors text-text-secondary" aria-label="Notifications">
+          <div className="flex items-center space-x-2 pl-2 lg:pl-6 border-l border-eq-border ml-2 lg:ml-6">
+            <button className="p-2 transition-colors text-eq-text-secondary hover:text-eq-text" aria-label="Notifications">
               <Bell className="w-5 h-5" />
             </button>
-            <button onClick={() => navigate('/settings')} className="p-2 rounded-full hover:bg-hover-bg transition-colors text-text-secondary" aria-label="Settings">
+            <button onClick={() => navigate('/settings')} className="p-2 transition-colors text-eq-text-secondary hover:text-eq-text" aria-label="Settings">
               <Settings className="w-5 h-5" />
             </button>
             {user ? (
-              <button onClick={() => navigate('/profile')} className="ml-1 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white hover:bg-blue-700 transition-colors">
+              <button onClick={() => navigate('/profile')} className="ml-2 w-8 h-8 rounded-full bg-eq-blue flex items-center justify-center text-xs font-bold text-eq-text hover:bg-eq-blue-hover transition-colors">
                 {getInitials(user)}
               </button>
             ) : (
-              <button onClick={() => navigate('/profile')} className="ml-1 p-2 rounded-full hover:bg-hover-bg transition-colors text-text-secondary" aria-label="Login">
+              <button onClick={() => navigate('/profile')} className="ml-2 p-2 transition-colors text-eq-text-secondary hover:text-eq-text" aria-label="Login">
                 <User className="w-5 h-5" />
               </button>
             )}

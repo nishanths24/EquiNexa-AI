@@ -1,39 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  --color-black-bg: #000000;
-  --color-sidebar-bg: #050505;
-  --color-header-bg: #080808;
-  --color-card-bg: #0b0b0b;
-  --color-hover-bg: #111111;
-  --color-border-subtle: #242424;
-  --color-text-primary: #f5f5f5;
-  --color-text-secondary: #a3a3a3;
-  --color-text-muted: #737373;
-  --color-market-up: #22c55e;
-  --color-market-down: #ef4444;
-}
+  --color-eq-bg: #09090b;
+  --color-eq-surface: #121214;
+  --color-eq-surface-elevated: #1a1a1e;
+  --color-eq-border: #27272a;
+  --color-eq-border-active: #3f3f46;
+  
+  --color-eq-blue: #2563eb;
+  --color-eq-blue-hover: #1d4ed8;
+  --color-eq-blue-muted: #1e3a8a;
+  
+  --color-eq-green: #16a34a;
+  --color-eq-green-muted: rgba(22, 163, 74, 0.15);
+  
+  --color-eq-red: #dc2626;
+  --color-eq-red-muted: rgba(220, 38, 38, 0.15);
+  
+  --color-eq-orange: #ea580c;
+  --color-eq-orange-muted: rgba(234, 88, 12, 0.15);
+  
+  --color-eq-text: #f4f4f5;
+  --color-eq-text-secondary: #a1a1aa;
+  --color-eq-text-muted: #71717a;
 
-/* Light Theme Overrides */
-.light-theme {
-  --color-black-bg: #f9fafb;
-  --color-sidebar-bg: #ffffff;
-  --color-header-bg: #ffffff;
-  --color-card-bg: #ffffff;
-  --color-hover-bg: #f3f4f6;
-  --color-border-subtle: #e5e7eb;
-  --color-text-primary: #111827;
-  --color-text-secondary: #4b5563;
-  --color-text-muted: #6b7280;
-  --color-market-up: #16a34a;
-  --color-market-down: #dc2626;
+  /* Map old variables for compatibility while we transition */
+  --color-black-bg: var(--color-eq-bg);
+  --color-sidebar-bg: var(--color-eq-surface);
+  --color-header-bg: var(--color-eq-surface);
+  --color-card-bg: var(--color-eq-surface);
+  --color-hover-bg: var(--color-eq-surface-elevated);
+  --color-border-subtle: var(--color-eq-border);
+  --color-text-primary: var(--color-eq-text);
+  --color-text-secondary: var(--color-eq-text-secondary);
+  --color-text-muted: var(--color-eq-text-muted);
+  --color-market-up: var(--color-eq-green);
+  --color-market-down: var(--color-eq-red);
 }
 
 @layer base {
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: var(--color-black-bg);
-    color: var(--color-text-primary);
+    background-color: var(--color-eq-bg);
+    color: var(--color-eq-text);
+    font-family: 'Inter', sans-serif;
   }
 }

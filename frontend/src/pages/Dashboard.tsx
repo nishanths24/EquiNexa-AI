@@ -1,4 +1,4 @@
-import { Activity, TrendingUp, TrendingDown, Globe, PieChart, BarChart3, LineChart, FileText, Clock } from 'lucide-react';
+import { Globe, PieChart, BarChart3, FileText, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const MOCK_INDICES = [
@@ -33,47 +33,39 @@ const Dashboard = () => {
     <div className="flex flex-col h-full bg-black-bg text-text-primary p-4 lg:p-6 max-w-screen-2xl mx-auto w-full space-y-6 overflow-y-auto">
       
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-4 border-b border-eq-border">
         <div>
-          <h1 className="text-2xl font-bold flex items-center">
-            <LayoutDashboard className="w-6 h-6 mr-2 text-blue-500" />
+          <h1 className="text-xl font-bold flex items-center text-eq-text">
             Global Markets Overview
           </h1>
-          <p className="text-sm text-text-muted mt-1">Real-time index tracking and market breadth analysis.</p>
+          <p className="text-xs text-eq-text-secondary mt-1">Real-time index tracking and market breadth analysis.</p>
         </div>
         <div className="flex items-center space-x-2">
-           <span className="px-3 py-1 bg-green-900/30 text-market-up border border-green-900/50 text-sm rounded font-medium flex items-center">
-              <span className="relative flex h-2 w-2 mr-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-market-up opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-market-up"></span>
-              </span>
-              MARKETS OPEN
+           <span className="text-eq-green text-sm font-medium flex items-center">
+              <span className="h-2 w-2 rounded-full bg-eq-green mr-2"></span>
+              Markets Open
            </span>
         </div>
       </div>
 
       {/* Main Indices Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {MOCK_INDICES.map((idx) => (
           <div 
             key={idx.name} 
             onClick={() => handleNavigateToChart(idx.name)}
-            className="bg-card-bg border border-border-subtle rounded-lg p-5 hover:border-blue-500/50 hover:bg-hover-bg transition-all cursor-pointer group"
+            className="bg-eq-surface border border-eq-border rounded p-4 hover:border-eq-border-active transition-all cursor-pointer group"
           >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">{idx.name}</h3>
-              <Activity className={`w-5 h-5 ${idx.trend === 'up' ? 'text-market-up' : 'text-market-down'}`} />
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-semibold text-sm text-eq-text-secondary group-hover:text-eq-text transition-colors">{idx.name}</h3>
+              <span className={`text-xs font-mono font-medium ${idx.trend === 'up' ? 'text-eq-green' : 'text-eq-red'}`}>
+                {idx.percent}
+              </span>
             </div>
-            <div className="flex justify-between items-end">
-              <div>
-                <div className="text-3xl font-mono font-bold">{idx.value}</div>
-                <div className={`font-mono text-sm font-medium flex items-center mt-1 ${idx.trend === 'up' ? 'text-market-up' : 'text-market-down'}`}>
-                  {idx.trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-                  {idx.change} ({idx.percent})
-                </div>
-              </div>
-              <div className="w-20 h-10 bg-black-bg rounded border border-border-subtle flex items-center justify-center opacity-50">
-                <LineChart className="w-5 h-5 text-text-muted" />
+            <div className="flex flex-col">
+              <div className="text-xl font-mono font-bold text-eq-text">{idx.value}</div>
+              <div className={`font-mono text-xs font-medium flex items-center mt-0.5 ${idx.trend === 'up' ? 'text-eq-green' : 'text-eq-red'}`}>
+                {idx.change}
               </div>
             </div>
           </div>
@@ -159,8 +151,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-// Lucide icon not imported in top level to avoid clutter, importing locally for Dashboard
-import { LayoutDashboard } from 'lucide-react';
 
 export default Dashboard;

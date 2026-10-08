@@ -1,19 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { createChart, ColorType } from 'lightweight-charts';
+import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi } from 'lightweight-charts';
-import { LineChart, Beaker, Newspaper, Info, ShieldAlert, TrendingUp, TrendingDown, Target, StopCircle, Maximize, Minimize } from 'lucide-react';
-
-const MOCK_CANDLES = [
-  { time: '2026-10-01', open: 2450.5, high: 2475.0, low: 2440.0, close: 2465.2 },
-  { time: '2026-10-02', open: 2465.2, high: 2500.0, low: 2460.0, close: 2495.5 },
-  { time: '2026-10-03', open: 2490.0, high: 2510.5, low: 2480.0, close: 2505.0 },
-  { time: '2026-10-04', open: 2505.0, high: 2525.0, low: 2495.0, close: 2515.5 },
-  { time: '2026-10-05', open: 2520.0, high: 2540.0, low: 2490.0, close: 2495.0 },
-  { time: '2026-10-06', open: 2490.0, high: 2510.0, low: 2470.0, close: 2485.5 },
-  { time: '2026-10-07', open: 2485.5, high: 2515.0, low: 2480.0, close: 2510.0 },
-  { time: '2026-10-08', open: 2510.0, high: 2535.0, low: 2505.0, close: 2525.5 }
-];
+import { Maximize, Minimize, AlertCircle } from 'lucide-react';
 
 const StockAnalysis = () => {
   const location = useLocation();
@@ -23,96 +12,170 @@ const StockAnalysis = () => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [chartData, setChartData] = useState<any[]>(MOCK_CANDLES);
+  const [chartData, setChartData] = useState<any[]>([]);
   const [aiReport, setAiReport] = useState<any>(null);
-  const [timeframe, setTimeframe] = useState('1D');
+  const [tooltipData, setTooltipData] = useState<any>(null);
+  
+  // Independent Interval and Range
+  const [interval, setInterval] = useState('1d');
+  const [range, setRange] = useState('max');
+  
+  const intervals = [
+    { label: '1m', value: '1m' },
+    { label: '5m', value: '5m' },
+    { label: '15m', value: '15m' },
+    { label: '1H', value: '1h' },
+    { label: '1D', value: '1d' },
+    { label: '1W', value: '1wk' },
+    { label: '1M', value: '1mo' },
+  ];
+  
+  const ranges = [
+    { label: '1D', value: '1d' },
+    { label: '5D', value: '5d' },
+    { label: '1M', value: '1mo' },
+    { label: '3M', value: '3mo' },
+    { label: '6M', value: '6mo' },
+    { label: '1Y', value: '1y' },
+    { label: '5Y', value: '5y' },
+    { label: 'MAX', value: 'max' },
+  ];
 
   useEffect(() => {
-    // Map timeframe to yfinance period/interval
-    const tfMap: Record<string, { period: string, interval: string }> = {
-      '1m': { period: '5d', interval: '1m' },
-      '5m': { period: '5d', interval: '5m' },
-      '15m': { period: '1mo', interval: '15m' },
-      '1H': { period: '3mo', interval: '1h' },
-      '1D': { period: '1y', interval: '1d' }
-    };
-    const { period, interval } = tfMap[timeframe] || tfMap['1D'];
-
-    // Fetch live market data for chart
-    fetch(`http://localhost:8000/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=${period}&interval=${interval}`)
+    // Fetch live market data for chart based on independent interval and period (range)
+    fetch(`http://localhost:8000/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=${range}&interval=${interval}`)
       .then(res => res.json())
       .then(data => {
-        if (data.status === 'OK' && data.data) {
-          // Map to lightweight-charts format
+        if (data.status === 'OK' && data.data && data.data.length > 0) {
+          const isDailyOrAbove = ['1d', '1wk', '1mo'].includes(interval);
+          
           const formatted = data.data.map((d: any) => {
-            const isDaily = interval === '1d';
-            // Use 'YYYY-MM-DD' for daily to avoid timezone shifts, else unix timestamp for intraday
-            const timeValue = isDaily ? d.time.split('T')[0] : (new Date(d.time).getTime() / 1000);
+            const timeValue = isDailyOrAbove 
+                ? d.time.split('T')[0] 
+                : (new Date(d.time).getTime() / 1000);
+                
             return {
               time: timeValue,
               open: d.open,
               high: d.high,
               low: d.low,
-              close: d.close
+              close: d.close,
+              value: d.volume, // volume
+              color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)' // volume color
             };
           });
-          // lightweight-charts requires unique, sorted times
+          
           const uniqueData = Array.from(new Map(formatted.map((item: any) => [item.time, item])).values());
-          setChartData(uniqueData.sort((a: any, b: any) => {
+          const sorted = uniqueData.sort((a: any, b: any) => {
             if (typeof a.time === 'string') return a.time.localeCompare(b.time);
             return a.time - b.time;
-          }));
+          });
+          
+          setChartData(sorted);
+        } else {
+            setChartData([]); // clear old data if invalid combination
         }
       })
-      .catch(console.error);
-  }, [ticker, timeframe]);
+      .catch(err => {
+          console.error(err);
+          setChartData([]);
+      });
+  }, [ticker, interval, range]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#0b0b0b' },
-        textColor: '#a3a3a3',
+        background: { type: ColorType.Solid, color: '#121214' }, // eq-surface
+        textColor: '#a1a1aa', // eq-text-secondary
       },
       grid: {
-        vertLines: { color: '#242424' },
-        horzLines: { color: '#242424' },
+        vertLines: { color: 'rgba(39, 39, 42, 0.5)' }, // very subtle eq-border
+        horzLines: { color: 'rgba(39, 39, 42, 0.5)' },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
       },
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: chartContainerRef.current.clientHeight,
       timeScale: {
-        timeVisible: true,
+        timeVisible: !['1d', '1wk', '1mo'].includes(interval),
         secondsVisible: false,
+        rightOffset: 5,
+        barSpacing: 8,
       },
+      rightPriceScale: {
+        borderColor: '#27272a', // eq-border
+      }
     });
 
     const candlestickSeries = chart.addCandlestickSeries({
-      upColor: '#22c55e',
-      downColor: '#ef4444',
+      upColor: '#16a34a',
+      downColor: '#dc2626',
       borderVisible: false,
-      wickUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
+      wickUpColor: '#16a34a',
+      wickDownColor: '#dc2626',
     });
 
-    candlestickSeriesRef.current = candlestickSeries;
+    const volumeSeries = chart.addHistogramSeries({
+        priceFormat: { type: 'volume' },
+        priceScaleId: '',
+    });
+    volumeSeries.priceScale().applyOptions({
+        scaleMargins: { top: 0.8, bottom: 0 },
+    });
 
     chartRef.current = chart;
     candlestickSeriesRef.current = candlestickSeries;
+    volumeSeriesRef.current = volumeSeries;
 
-    if (candlestickSeriesRef.current && chartData.length > 0) {
+    if (chartData.length > 0) {
       try {
         candlestickSeriesRef.current.setData(chartData);
+        volumeSeriesRef.current.setData(chartData);
       } catch (e) {
         console.warn('Could not set chart data', e);
       }
     }
 
+    chart.subscribeCrosshairMove((param) => {
+      if (
+        param.point === undefined ||
+        !param.time ||
+        param.point.x < 0 ||
+        param.point.x > chartContainerRef.current!.clientWidth ||
+        param.point.y < 0 ||
+        param.point.y > chartContainerRef.current!.clientHeight
+      ) {
+        setTooltipData(null);
+        return;
+      }
+
+      const barData = param.seriesData.get(candlestickSeries);
+      const volData = param.seriesData.get(volumeSeries);
+      
+      if (barData) {
+        setTooltipData({
+          time: param.time,
+          open: (barData as any).open,
+          high: (barData as any).high,
+          low: (barData as any).low,
+          close: (barData as any).close,
+          volume: volData ? (volData as any).value : 0,
+        });
+      }
+    });
+
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+        chartRef.current.applyOptions({ 
+            width: chartContainerRef.current.clientWidth,
+            height: chartContainerRef.current.clientHeight 
+        });
       }
     };
 
@@ -122,7 +185,7 @@ const StockAnalysis = () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       chart.remove();
     };
-  }, [chartData]);
+  }, [chartData, interval]);
 
   const handleFullscreenChange = () => {
     setIsFullscreen(!!document.fullscreenElement);
@@ -159,182 +222,207 @@ const StockAnalysis = () => {
     setIsAnalyzing(false);
   };
 
+  const currentPrice = chartData.length > 0 ? chartData[chartData.length - 1].close : null;
+  const previousPrice = chartData.length > 1 ? chartData[chartData.length - 2].close : null;
+  const priceChange = currentPrice && previousPrice ? currentPrice - previousPrice : 0;
+  const priceChangePct = previousPrice ? (priceChange / previousPrice) * 100 : 0;
+  const isUp = priceChange >= 0;
+
   return (
-    <div className="flex flex-col lg:flex-row h-full w-full gap-6 max-w-screen-2xl mx-auto p-4 lg:p-6 bg-black-bg text-text-primary">
-      {/* Left Column: Chart and Data */}
-      <div className="flex-1 flex flex-col space-y-6 min-w-0">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] w-full overflow-hidden bg-eq-bg text-eq-text">
+      
+      {/* Center/Left: Chart Workspace */}
+      <div className="flex-1 flex flex-col min-w-0 border-r border-eq-border">
         
-        {/* Header Bar */}
-        <div className="bg-card-bg border border-border-subtle rounded-lg p-4 flex justify-between items-center">
-          <div>
+        {/* Top Header */}
+        <div className="h-14 bg-eq-surface border-b border-eq-border flex items-center justify-between px-4">
             <div className="flex items-center space-x-3">
-              <h1 className="text-2xl font-bold text-text-primary">{ticker}</h1>
-              <span className="px-2 py-0.5 bg-border-subtle text-text-secondary text-xs rounded font-medium">EQ</span>
-              <span className="px-2 py-0.5 bg-green-900/30 text-market-up border border-green-900/50 text-xs rounded font-medium flex items-center">
-                <span className="relative flex h-2 w-2 mr-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-market-up opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-market-up"></span>
+                <h1 className="text-lg font-bold">{ticker}</h1>
+                <span className="text-xs text-eq-text-secondary border border-eq-border px-1 py-0.5 rounded">NSE</span>
+                <span className="text-eq-green text-xs font-medium flex items-center ml-2">
+                    <span className="h-2 w-2 rounded-full bg-eq-green mr-1.5"></span>
+                    LIVE
                 </span>
-                LIVE
-              </span>
             </div>
-            <div className="text-sm text-text-muted mt-1">Live Market Data Integration</div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-mono font-bold text-text-primary">
-              {chartData.length > 0 ? `₹${chartData[chartData.length - 1].close.toFixed(2)}` : 'Loading...'}
-            </div>
-            {chartData.length > 1 && (
-              <div className={`font-mono text-sm font-medium flex items-center justify-end ${chartData[chartData.length - 1].close >= chartData[chartData.length - 2].close ? 'text-market-up' : 'text-market-down'}`}>
-                {chartData[chartData.length - 1].close >= chartData[chartData.length - 2].close ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-                {Math.abs(chartData[chartData.length - 1].close - chartData[chartData.length - 2].close).toFixed(2)}
-              </div>
+            {currentPrice && (
+                <div className="flex items-center space-x-3">
+                    <div className="text-lg font-mono font-bold">₹{currentPrice.toFixed(2)}</div>
+                    <div className={`font-mono text-sm font-medium ${isUp ? 'text-eq-green' : 'text-eq-red'}`}>
+                        {isUp ? '+' : ''}{priceChange.toFixed(2)} ({isUp ? '+' : ''}{priceChangePct.toFixed(2)}%)
+                    </div>
+                </div>
             )}
-          </div>
         </div>
 
-        {/* Chart Container */}
-        <div className="bg-card-bg border border-border-subtle rounded-lg p-1 flex flex-col flex-1 min-h-[400px]">
-          <div className="flex items-center justify-between p-3 border-b border-border-subtle">
-            <div className="flex space-x-2">
-              {['1m', '5m', '15m', '1H', '1D'].map(tf => (
-                <button 
-                  key={tf} 
-                  onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${tf === timeframe ? 'bg-hover-bg text-text-primary' : 'text-text-muted hover:bg-hover-bg hover:text-text-secondary'}`}
-                >
-                  {tf}
+        {/* Chart Toolbar (Intervals & Tools) */}
+        <div className="h-10 bg-eq-surface border-b border-eq-border flex items-center justify-between px-2">
+            <div className="flex items-center space-x-1">
+                {intervals.map(tf => (
+                    <button 
+                        key={tf.value} 
+                        onClick={() => setInterval(tf.value)}
+                        className={`px-2 py-1 text-xs font-medium transition-colors ${
+                            interval === tf.value 
+                            ? 'text-eq-blue border-b-2 border-eq-blue' 
+                            : 'text-eq-text-secondary hover:text-eq-text'
+                        }`}
+                    >
+                        {tf.label}
+                    </button>
+                ))}
+                
+                <div className="w-px h-4 bg-eq-border mx-2"></div>
+                
+                <button className="px-2 py-1 text-xs font-medium text-eq-text-secondary hover:text-eq-text flex items-center">
+                    Indicators
                 </button>
-              ))}
             </div>
-            <div className="flex space-x-2">
-              <button className="px-3 py-1 rounded text-sm font-medium text-text-muted hover:bg-hover-bg transition-colors flex items-center">
-                <LineChart className="w-4 h-4 mr-1.5" /> Indicators
-              </button>
-              <button onClick={toggleFullscreen} className="px-2 py-1 rounded text-text-muted hover:bg-hover-bg transition-colors">
-                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-              </button>
+            <div className="flex items-center space-x-2">
+                <button onClick={toggleFullscreen} className="p-1 text-eq-text-secondary hover:text-eq-text transition-colors">
+                    {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </button>
             </div>
-          </div>
-          <div ref={chartContainerRef} className="flex-1 w-full relative" />
         </div>
 
-        {/* Bottom Panel: Fundamentals & News */}
-        <div className="bg-card-bg border border-border-subtle rounded-lg grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border-subtle">
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3 flex items-center">
-              <Info className="w-4 h-4 mr-1.5" /> Fundamentals
-            </h3>
-            <div className="grid grid-cols-2 gap-y-3 text-sm">
-              <div><span className="text-text-muted block">Market Cap</span><span className="font-mono">₹17.2T</span></div>
-              <div><span className="text-text-muted block">P/E Ratio</span><span className="font-mono">28.4</span></div>
-              <div><span className="text-text-muted block">Dividend Yield</span><span className="font-mono">0.34%</span></div>
-              <div><span className="text-text-muted block">52W High</span><span className="font-mono">₹3,024.90</span></div>
+        {/* Chart Area */}
+        <div className="flex-1 relative bg-eq-surface">
+            {!chartData.length && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 text-eq-text-muted">
+                    No data available for this combination.
+                </div>
+            )}
+            
+            {/* Tooltip Overlay */}
+            {tooltipData && (
+                <div className="absolute top-2 left-4 z-20 flex space-x-3 text-xs font-mono pointer-events-none">
+                    <span className="text-eq-text-secondary">
+                        {typeof tooltipData.time === 'string' 
+                            ? tooltipData.time 
+                            : new Date(tooltipData.time * 1000).toLocaleString()}
+                    </span>
+                    <span className="text-eq-text-secondary">O <span className="text-eq-text">{tooltipData.open.toFixed(2)}</span></span>
+                    <span className="text-eq-text-secondary">H <span className="text-eq-text">{tooltipData.high.toFixed(2)}</span></span>
+                    <span className="text-eq-text-secondary">L <span className="text-eq-text">{tooltipData.low.toFixed(2)}</span></span>
+                    <span className="text-eq-text-secondary">C <span className="text-eq-text">{tooltipData.close.toFixed(2)}</span></span>
+                    <span className="text-eq-text-secondary">V <span className="text-eq-text">{tooltipData.volume > 1000000 ? (tooltipData.volume/1000000).toFixed(2)+'M' : tooltipData.volume > 1000 ? (tooltipData.volume/1000).toFixed(2)+'K' : tooltipData.volume}</span></span>
+                </div>
+            )}
+
+            <div ref={chartContainerRef} className="absolute inset-0" />
+        </div>
+
+        {/* Bottom Toolbar (Range) */}
+        <div className="h-10 bg-eq-surface border-t border-eq-border flex items-center px-4">
+            <span className="text-xs text-eq-text-secondary mr-3 font-semibold uppercase">Range:</span>
+            <div className="flex space-x-2">
+                {ranges.map(r => (
+                    <button 
+                        key={r.value} 
+                        onClick={() => setRange(r.value)}
+                        className={`px-2 py-1 text-xs font-medium transition-colors rounded ${
+                            range === r.value 
+                            ? 'bg-eq-blue text-eq-text' 
+                            : 'text-eq-text-secondary hover:bg-eq-surface-elevated hover:text-eq-text'
+                        }`}
+                    >
+                        {r.label}
+                    </button>
+                ))}
             </div>
-          </div>
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3 flex items-center">
-              <Newspaper className="w-4 h-4 mr-1.5" /> Recent News
-            </h3>
-            <div className="space-y-3">
-              <div className="text-sm hover:text-blue-400 cursor-pointer transition-colors line-clamp-1">Reliance Jio announces new 5G tariff plans starting next month.</div>
-              <div className="text-sm hover:text-blue-400 cursor-pointer transition-colors line-clamp-1">Retail division sees 12% YoY growth in quarterly footprint.</div>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Right Column: AI Analysis */}
-      <div className="w-full lg:w-96 flex flex-col space-y-4">
-        <div className="bg-card-bg border border-border-subtle rounded-lg p-5 flex flex-col flex-1">
-          <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-4">
-            <h2 className="text-lg font-bold flex items-center text-blue-400">
-              <Beaker className="w-5 h-5 mr-2" />
-              EquiNexa AI Analyst
+      <div className="w-full lg:w-[380px] flex flex-col bg-eq-surface border-l border-eq-border overflow-y-auto">
+        <div className="p-4 border-b border-eq-border">
+            <h2 className="text-sm font-semibold text-eq-blue uppercase tracking-wide">
+                EquiNexa AI Analyst
             </h2>
-          </div>
+        </div>
 
-          {!isAnalyzing ? (
-            <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-              {/* Prediction Header */}
-              {aiReport ? (
-                <div className="p-4 bg-hover-bg rounded-lg border border-border-subtle">
-                  <div className="text-sm font-semibold mb-2">Generated Report:</div>
-                  <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
-                    {aiReport.report}
-                  </div>
-                  <div className="mt-4 text-xs text-text-muted">
-                    <strong>Sources:</strong> {aiReport.citations?.join(', ') || 'Unverified'}
-                  </div>
-                </div>
-              ) : (
+        <div className="p-4 flex-1 flex flex-col space-y-6">
+            {!isAnalyzing ? (
                 <>
-                  <div className="p-4 bg-hover-bg rounded-lg border border-border-subtle">
-                    <div className="text-sm text-text-muted mb-1">AI Market Bias</div>
-                    <div className="text-xl font-bold text-market-up flex items-center">
-                      BULLISH <TrendingUp className="w-5 h-5 ml-2" />
+                {aiReport ? (
+                    <div className="space-y-4">
+                        <div className="text-sm text-eq-text leading-relaxed">
+                            {aiReport.report}
+                        </div>
                     </div>
-                    <div className="text-xs text-text-muted mt-2">Confidence: <span className="font-mono text-text-primary">78%</span></div>
-                  </div>
-
-              {/* Technical Reasoning */}
-              <div>
-                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Evidence</h3>
-                <ul className="space-y-2 text-sm text-text-primary">
-                  <li className="flex items-start"><span className="text-market-up mr-2">•</span> <strong>Candlestick:</strong> Bullish Engulfing pattern detected on 1D timeframe.</li>
-                  <li className="flex items-start"><span className="text-market-up mr-2">•</span> <strong>Indicators:</strong> RSI at 54, MACD crossover observed confirming upward momentum.</li>
-                  <li className="flex items-start"><span className="text-text-muted mr-2">•</span> <strong>S/R:</strong> Strong support zone held at ₹2450.</li>
-                  <li className="flex items-start"><span className="text-market-up mr-2">•</span> <strong>News:</strong> Retail growth figures driving positive sentiment.</li>
-                </ul>
-              </div>
-
-              {/* Trade Setup */}
-              <div>
-                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Long Setup</h3>
-                <div className="space-y-3 font-mono text-sm">
-                  <div className="flex justify-between items-center p-2 rounded bg-black-bg border border-border-subtle">
-                    <span className="text-text-muted flex items-center"><TrendingUp className="w-4 h-4 mr-2 text-blue-400"/> Entry Zone</span>
-                    <span>₹2,510 - ₹2,530</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-black-bg border border-border-subtle">
-                    <span className="text-text-muted flex items-center"><Target className="w-4 h-4 mr-2 text-market-up"/> Target 1</span>
-                    <span className="text-market-up">₹2,600</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-black-bg border border-border-subtle">
-                    <span className="text-text-muted flex items-center"><StopCircle className="w-4 h-4 mr-2 text-market-down"/> Stop Loss</span>
-                    <span className="text-market-down">₹2,480</span>
-                  </div>
+                ) : (
+                    <>
+                        {/* Summary Block */}
+                        <div>
+                            <div className="text-xs text-eq-text-secondary uppercase mb-1 tracking-wider">AI Market Bias</div>
+                            <div className="text-lg font-bold text-eq-green">BULLISH</div>
+                            <div className="text-xs text-eq-text-secondary mt-1">Confidence: <span className="font-mono text-eq-text">78%</span></div>
+                        </div>
+                        
+                        {/* Evidence */}
+                        <div>
+                            <div className="text-xs text-eq-text-secondary uppercase mb-2 tracking-wider">Technical Signal</div>
+                            <ul className="space-y-2 text-sm text-eq-text">
+                                <li className="flex items-start">
+                                    <span className="text-eq-green mr-2 font-bold">↑</span> 
+                                    <span>Bullish Engulfing pattern on 1D.</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <span className="text-eq-green mr-2 font-bold">↑</span> 
+                                    <span>RSI at 54, MACD crossover confirmed.</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <span className="text-eq-text-muted mr-2 font-bold">-</span> 
+                                    <span>Strong support zone held at ₹2450.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        {/* Levels */}
+                        <div>
+                            <div className="text-xs text-eq-text-secondary uppercase mb-2 tracking-wider">Key Levels</div>
+                            <div className="space-y-1 font-mono text-sm border border-eq-border rounded bg-eq-surface-elevated overflow-hidden">
+                                <div className="flex justify-between items-center p-2 border-b border-eq-border">
+                                    <span className="text-eq-text-secondary">Entry Zone</span>
+                                    <span>₹2,510 - ₹2,530</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2 border-b border-eq-border">
+                                    <span className="text-eq-text-secondary">Target</span>
+                                    <span className="text-eq-green">₹2,600</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2">
+                                    <span className="text-eq-text-secondary">Stop Loss</span>
+                                    <span className="text-eq-red">₹2,480</span>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+                </>
+            ) : (
+                <div className="flex-1 flex flex-col items-center justify-center space-y-3 py-10">
+                    <div className="w-8 h-8 border-2 border-eq-border border-t-eq-blue rounded-full animate-spin"></div>
+                    <p className="text-eq-text-secondary text-xs font-medium animate-pulse">Running quantitative analysis...</p>
                 </div>
-              </div>
-            </>
-          )}
+            )}
+        </div>
 
-          {/* Disclaimer */}
-              <div className="mt-4 p-3 bg-red-950/20 border border-red-900/50 rounded-lg flex items-start">
-                <ShieldAlert className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-text-muted">
-                  <strong className="text-red-400 block mb-1">RISK WARNING</strong>
-                  Market predictions are probabilistic and can be wrong. The analysis uses available market data and is not personalized financial advice.
+        <div className="p-4 border-t border-eq-border">
+            {/* Disclaimer */}
+            <div className="mb-4 p-2 border border-eq-orange-muted bg-[rgba(234,88,12,0.05)] rounded flex items-start">
+                <AlertCircle className="w-4 h-4 text-eq-orange mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-[10px] text-eq-text-secondary leading-tight">
+                    <strong className="text-eq-orange block mb-0.5">RISK WARNING</strong>
+                    Predictions are probabilistic. Use this tool as a reference, not as financial advice.
                 </p>
-              </div>
             </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-              <div className="w-10 h-10 border-4 border-border-subtle border-t-blue-500 rounded-full animate-spin"></div>
-              <p className="text-text-muted text-sm font-medium animate-pulse">Running quantitative analysis...</p>
-            </div>
-          )}
-
-          <div className="pt-4 mt-4 border-t border-border-subtle">
+            
             <button 
               onClick={runAnalysis}
               disabled={isAnalyzing}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-semibold transition-colors flex items-center justify-center"
+              className="w-full py-2 bg-eq-blue hover:bg-eq-blue-hover disabled:opacity-50 text-eq-text text-sm rounded font-medium transition-colors flex items-center justify-center"
             >
-              <Beaker className="w-5 h-5 mr-2" />
-              Analyze Current Market
+              Analyze Market
             </button>
-          </div>
         </div>
       </div>
     </div>
