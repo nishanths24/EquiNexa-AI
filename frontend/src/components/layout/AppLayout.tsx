@@ -1,7 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, DollarSign, Globe, Filter, Star, Bell, ChevronDown, Home } from 'lucide-react';
+import { Activity, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, DollarSign, Globe, Filter, Star, Bell, ChevronDown, Home, User } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { searchMarkets, type SearchResult } from '../../services/api/markets';
+import { supabase } from '../../lib/supabase';
 
 const AppLayout = () => {
   const location = useLocation();
@@ -12,11 +13,20 @@ const AppLayout = () => {
   const [searching, setSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   
   const searchRef = useRef<HTMLDivElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setSearchOpen(false);
@@ -26,8 +36,18 @@ const AppLayout = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const getInitials = (userData: any) => {
+    if (!userData) return '';
+    const name = userData.user_metadata?.full_name || userData.email || '';
+    if (!name) return 'U';
+    return name.substring(0, 2).toUpperCase();
+  };
 
   useEffect(() => {
     const debounceTimer = setTimeout(async () => {
@@ -189,9 +209,15 @@ const AppLayout = () => {
             <button onClick={() => navigate('/settings')} className="p-2 rounded-full hover:bg-hover-bg transition-colors text-text-secondary" aria-label="Settings">
               <Settings className="w-5 h-5" />
             </button>
-            <button onClick={() => navigate('/profile')} className="ml-1 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white hover:bg-blue-700 transition-colors">
-              NS
-            </button>
+            {user ? (
+              <button onClick={() => navigate('/profile')} className="ml-1 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white hover:bg-blue-700 transition-colors">
+                {getInitials(user)}
+              </button>
+            ) : (
+              <button onClick={() => navigate('/profile')} className="ml-1 p-2 rounded-full hover:bg-hover-bg transition-colors text-text-secondary" aria-label="Login">
+                <User className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       </header>
