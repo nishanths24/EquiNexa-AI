@@ -9,5 +9,5 @@ api_router.include_router(news.router, prefix="", tags=["V2 News"])
 api_router.include_router(fundamentals.router, prefix="", tags=["V2 Fundamentals"])
 api_router.include_router(analysis.router, prefix="", tags=["V2 AI Analysis"])
 api_router.include_router(stream.router, prefix="", tags=["V2 Stream"])
-api_router.include_router(admin.router, prefix="/admin", tags=["V2 Admin"])
+api_router.include_router(admin.router, prefix="", tags=["V2 Admin"])
 
