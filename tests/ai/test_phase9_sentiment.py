@@ -1,5 +1,5 @@
 import pytest
-from app.ai.sentiment.nlp_pipeline import NLPSentimentPipeline
+from backend.app.ai.sentiment.nlp_pipeline import NLPSentimentPipeline
 
 def test_sentiment_validation_set():
     """

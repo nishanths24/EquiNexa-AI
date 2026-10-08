@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any
 
-from app.core.auth import get_current_admin
+from backend.app.core.auth import get_current_admin
 
 router = APIRouter(
     prefix="/admin",

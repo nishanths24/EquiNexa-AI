@@ -2,7 +2,7 @@ import pytest
 import time
 import statistics
 from fastapi.testclient import TestClient
-from app.api.main import app
+from backend.app.api.main import app
 
 client = TestClient(app)
 
@@ -61,7 +61,7 @@ def test_performance_p50_p95_p99_and_headers():
     
 def test_websocket_manager_logic():
     """Verify stream manager connection and subscription logic."""
-    from app.api.v2.websockets.manager import stream_manager
+    from backend.app.api.v2.websockets.manager import stream_manager
     # We test the pure logic without full async mock for now
     assert isinstance(stream_manager.subscriptions, dict)
     assert isinstance(stream_manager.connection_symbols, dict)

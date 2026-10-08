@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime, timedelta, timezone
-from app.models.domain.news import NewsArticle
-from app.services.news_service import deduplicate_news, apply_delay_labels
+from backend.app.models.domain.news import NewsArticle
+from backend.app.services.news_service import deduplicate_news, apply_delay_labels
 
 @pytest.fixture
 def base_time():

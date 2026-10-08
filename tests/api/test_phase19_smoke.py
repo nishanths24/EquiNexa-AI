@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.api.main import app
+from backend.app.api.main import app
 
 client = TestClient(app)
 
@@ -25,7 +25,7 @@ def test_phase19_v1_unaffected_smoke():
     
     # 4. Feature flags check
     # Ensure they default to False to prevent breaking production accidentally
-    from app.core.config import settings
+    from backend.app.core.config import settings
     assert settings.feature_flags.V2_MARKET_DATA is False
     assert settings.feature_flags.V2_AI_ANALYSIS is False
     assert settings.feature_flags.V2_AUTH is False

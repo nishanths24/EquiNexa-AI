@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from datetime import datetime
-from app.models.domain.market import Quote, OHLCV, MarketStatus
+from backend.app.models.domain.market import Quote, OHLCV, MarketStatus
 
 class MarketDataProvider(ABC):
     @property

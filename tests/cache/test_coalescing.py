@@ -1,7 +1,7 @@
 import pytest
 import asyncio
-from app.cache.cache_service import CacheService
-from app.providers.core.quota_manager import QuotaManager
+from backend.app.cache.cache_service import CacheService
+from backend.app.providers.core.quota_manager import QuotaManager
 
 @pytest.mark.asyncio
 async def test_cache_coalescing():

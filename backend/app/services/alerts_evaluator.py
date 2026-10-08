@@ -1,6 +1,6 @@
 import uuid
 from typing import List, Dict, Any
-from app.models.domain.alerts import AlertRule, AlertEvent
+from backend.app.models.domain.alerts import AlertRule, AlertEvent
 
 def evaluate_price_alerts(rules: List[AlertRule], current_prices: Dict[str, float]) -> List[AlertEvent]:
     """

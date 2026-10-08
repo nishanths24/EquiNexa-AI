@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Dict
 from pydantic import BaseModel
-from app.providers.core.provider_manager import ProviderManager
-from app.providers.adapters.yfinance_adapter import YFinanceAdapter
-from app.models.domain.market import Quote
+from backend.app.providers.core.provider_manager import ProviderManager
+from backend.app.providers.adapters.yfinance_adapter import YFinanceAdapter
+from backend.app.models.domain.market import Quote
 
 router = APIRouter()
 

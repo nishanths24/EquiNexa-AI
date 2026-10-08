@@ -1,5 +1,5 @@
 import pytest
-from app.services.fundamentals_service import normalize_fundamentals
+from backend.app.services.fundamentals_service import normalize_fundamentals
 
 def test_fundamentals_schema_retention():
     """

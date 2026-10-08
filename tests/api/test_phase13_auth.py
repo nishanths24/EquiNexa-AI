@@ -2,7 +2,7 @@ import pytest
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.testclient import TestClient
 import jwt
-from app.core.auth import get_current_user, get_current_admin, SUPABASE_JWT_SECRET
+from backend.app.core.auth import get_current_user, get_current_admin, SUPABASE_JWT_SECRET
 
 # Create a dummy app for testing the dependencies
 app = FastAPI()

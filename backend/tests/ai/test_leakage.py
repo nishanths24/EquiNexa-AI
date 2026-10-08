@@ -6,8 +6,8 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from app.ai.research.backtest.harness import BacktestHarness
-from app.ai.models.targets.labels import compute_labels
+from backend.app.ai.research.backtest.harness import BacktestHarness
+from backend.app.ai.models.targets.labels import compute_labels
 
 def test_embargo_leakage():
     # Create 50 days of dummy data
@@ -16,7 +16,7 @@ def test_embargo_leakage():
     
     harness = BacktestHarness(initial_train_size=20, step_size=5, embargo_bars=2)
     
-    from app.ai.research.evaluation.splits import walk_forward_split
+    from backend.app.ai.research.evaluation.splits import walk_forward_split
     splits = list(walk_forward_split(df, harness.initial_train_size, harness.step_size, harness.embargo_bars))
     assert len(splits) > 0
     

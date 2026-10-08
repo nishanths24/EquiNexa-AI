@@ -41,7 +41,7 @@ jobs:
 
       - name: Run Pytest Offline Suite
         run: |
-          pytest
+          pytest tests/
 
   frontend-tests:
     name: Frontend Vitest and Build

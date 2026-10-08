@@ -5,8 +5,8 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from app.ai.patterns.candlestick.engine import CandlestickEngine
-from app.ai.patterns.chart.engine import ChartPatternEngine
+from backend.app.ai.patterns.candlestick.engine import CandlestickEngine
+from backend.app.ai.patterns.chart.engine import ChartPatternEngine
 
 def test_doji_detection():
     ce = CandlestickEngine()

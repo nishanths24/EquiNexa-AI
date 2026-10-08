@@ -1,15 +1,15 @@
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from datetime import datetime
-from app.models.domain.market import Quote, DataMetadata
-from app.providers.interfaces.market_provider import MarketDataProvider
-from app.providers.core.circuit_breaker import CircuitBreaker, CircuitState, CircuitBreakerOpenException
-from app.providers.core.provider_manager import ProviderManager
+from backend.app.models.domain.market import Quote, DataMetadata
+from backend.app.providers.interfaces.market_provider import MarketDataProvider
+from backend.app.providers.core.circuit_breaker import CircuitBreaker, CircuitState, CircuitBreakerOpenException
+from backend.app.providers.core.provider_manager import ProviderManager
 
 # Import the new adapters
-from app.providers.adapters.yfinance_adapter import YFinanceAdapter
-from app.providers.adapters.twelvedata_adapter import TwelveDataAdapter
-from app.providers.adapters.alphavantage_adapter import AlphaVantageAdapter
+from backend.app.providers.adapters.yfinance_adapter import YFinanceAdapter
+from backend.app.providers.adapters.twelvedata_adapter import TwelveDataAdapter
+from backend.app.providers.adapters.alphavantage_adapter import AlphaVantageAdapter
 
 class MockProvider(MarketDataProvider):
     @property

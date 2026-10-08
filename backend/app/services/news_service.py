@@ -1,6 +1,6 @@
 from typing import List
 from datetime import timedelta
-from app.models.domain.news import NewsArticle
+from backend.app.models.domain.news import NewsArticle
 
 def deduplicate_news(articles: List[NewsArticle], time_window_hours: int = 2) -> List[NewsArticle]:
     """

@@ -1,6 +1,6 @@
 import pytest
-from app.models.domain.alerts import AlertRule
-from app.services.alerts_evaluator import evaluate_price_alerts
+from backend.app.models.domain.alerts import AlertRule
+from backend.app.services.alerts_evaluator import evaluate_price_alerts
 
 def test_centralized_alert_evaluation():
     """

@@ -1,8 +1,8 @@
 import pytest
 import pandas as pd
 import numpy as np
-from app.ai.technical.indicators import calculate_sma, calculate_rsi
-from app.ai.technical.patterns import detect_doji, detect_engulfing
+from backend.app.ai.technical.indicators import calculate_sma, calculate_rsi
+from backend.app.ai.technical.patterns import detect_doji, detect_engulfing
 
 @pytest.fixture
 def sample_ohlcv():

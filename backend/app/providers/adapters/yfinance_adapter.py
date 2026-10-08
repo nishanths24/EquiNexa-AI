@@ -1,8 +1,8 @@
 import yfinance as yf
 from datetime import datetime, timedelta
 from typing import List
-from app.models.domain.market import Quote, OHLCV, DataMetadata, MarketStatus
-from app.providers.interfaces.market_provider import MarketDataProvider
+from backend.app.models.domain.market import Quote, OHLCV, DataMetadata, MarketStatus
+from backend.app.providers.interfaces.market_provider import MarketDataProvider
 
 class YFinanceAdapter(MarketDataProvider):
     @property

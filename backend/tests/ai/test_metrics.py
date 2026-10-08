@@ -4,7 +4,7 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from app.ai.research.evaluation.metrics import evaluate_classification
+from backend.app.ai.research.evaluation.metrics import evaluate_classification
 
 def test_metrics_calculation():
     # Simple deterministic test

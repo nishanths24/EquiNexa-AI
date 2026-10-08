@@ -1,6 +1,6 @@
 import pytest
-from app.models.domain.ai_analysis import AIAnalysisResponse, SetupConfig
-from app.ai.risk.risk_engine import RiskEngine
+from backend.app.models.domain.ai_analysis import AIAnalysisResponse, SetupConfig
+from backend.app.ai.risk.risk_engine import RiskEngine
 from pydantic import ValidationError
 
 def test_phase10_pydantic_guardrails():

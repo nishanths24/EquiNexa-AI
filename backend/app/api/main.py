@@ -7,25 +7,17 @@ import sys
 from dotenv import load_dotenv
 from fastapi import Request
 from fastapi.responses import JSONResponse
-# Inject backend into sys.path BEFORE any app.* imports to resolve ModuleNotFoundError on Render
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-if backend_dir not in sys.path:
-    sys.path.insert(0, backend_dir)
-root_dir = os.path.abspath(os.path.join(backend_dir, '..'))
-if root_dir not in sys.path:
-    sys.path.append(root_dir)
-
-from app.core.config import settings
+from backend.app.core.config import settings
 
 # Explicitly load from backend/.env regardless of the working directory
-dotenv_path = os.path.join(backend_dir, '.env')
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 load_dotenv(dotenv_path=dotenv_path)
 
 # Append root for python module resolution if running directly
 
 from backend.app.ai.research.monitor import ObservationMonitor
 
-from app.core.security import check_rate_limit, add_security_headers_middleware
+from backend.app.core.security import check_rate_limit, add_security_headers_middleware
 from fastapi import Depends
 
 app = FastAPI(
@@ -1095,9 +1087,9 @@ def verify_ledger_chain():
     return {"status": "ok", "chain_valid": is_valid}
 
 # V2 Routers
-from app.api.v2.routers.market_overview import router as market_overview_router
-from app.api.v2.routers.admin import router as admin_router
-from app.api.v2.routers.stream import router as stream_router
+from backend.app.api.v2.routers.market_overview import router as market_overview_router
+from backend.app.api.v2.routers.admin import router as admin_router
+from backend.app.api.v2.routers.stream import router as stream_router
 app.include_router(market_overview_router, prefix="/api/v2", tags=["V2 Market Overview"])
 app.include_router(admin_router, prefix="/api/v2")
 app.include_router(stream_router, prefix="/api/v2")

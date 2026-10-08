@@ -1,7 +1,7 @@
 import pytest
 import math
 from fastapi.testclient import TestClient
-from app.api.main import app
+from backend.app.api.main import app
 
 client = TestClient(app)
 
@@ -12,7 +12,7 @@ def test_j1_mandatory_scenarios():
     """
     
     # 1. Valid data scenario (using health check as proxy for valid system response)
-    from app.core.security import _rate_limits
+    from backend.app.core.security import _rate_limits
     _rate_limits.clear()
     
     res = client.get("/api/v1/health")

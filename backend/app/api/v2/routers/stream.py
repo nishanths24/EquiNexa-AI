@@ -3,7 +3,7 @@ from typing import Any
 import json
 import logging
 
-from app.api.v2.websockets.manager import stream_manager
+from backend.app.api.v2.websockets.manager import stream_manager
 
 router = APIRouter(
     prefix="/stream",

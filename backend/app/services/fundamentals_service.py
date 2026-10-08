@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from app.models.domain.fundamentals import (
+from backend.app.models.domain.fundamentals import (
     FundamentalsData, IncomeStatement, FinancialStatementItem, KeyRatios
 )
 

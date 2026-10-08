@@ -1,7 +1,7 @@
 import pytest
 import os
 from fastapi.testclient import TestClient
-from app.api.main import app
+from backend.app.api.main import app
 
 client = TestClient(app)
 
@@ -18,7 +18,7 @@ def test_rate_limiting_429_returned():
     """Phase 17 Exit Gate: Anonymous rate limit is enforced."""
     # The anonymous limit is 30 requests per minute
     # Reset internal state if this is run multiple times
-    from app.core.security import _rate_limits
+    from backend.app.core.security import _rate_limits
     _rate_limits.clear()
     
     # Hit the limit

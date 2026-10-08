@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
-from app.providers.interfaces.market_provider import MarketDataProvider
-from app.providers.core.circuit_breaker import CircuitBreaker, CircuitBreakerOpenException
+from backend.app.providers.interfaces.market_provider import MarketDataProvider
+from backend.app.providers.core.circuit_breaker import CircuitBreaker, CircuitBreakerOpenException
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from app.ai.rag.sources.historical_news_provider import HistoricalArticle
+from backend.app.ai.rag.sources.historical_news_provider import HistoricalArticle
 
 def filter_news(articles: List[HistoricalArticle], as_of_date: datetime) -> List[HistoricalArticle]:
     return [a for a in articles if a.published_at <= as_of_date]
