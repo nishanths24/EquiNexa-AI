@@ -7,14 +7,21 @@ import sys
 from dotenv import load_dotenv
 from fastapi import Request
 from fastapi.responses import JSONResponse
+# Inject backend into sys.path BEFORE any app.* imports to resolve ModuleNotFoundError on Render
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+root_dir = os.path.abspath(os.path.join(backend_dir, '..'))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
 from app.core.config import settings
 
 # Explicitly load from backend/.env regardless of the working directory
-dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+dotenv_path = os.path.join(backend_dir, '.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 # Append root for python module resolution if running directly
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from backend.app.ai.research.monitor import ObservationMonitor
 
