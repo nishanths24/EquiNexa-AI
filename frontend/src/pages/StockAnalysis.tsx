@@ -235,19 +235,19 @@ const StockAnalysis = () => {
       <div className="flex-1 flex flex-col min-w-0 border-r border-eq-border">
         
         {/* Top Header */}
-        <div className="h-14 bg-eq-surface border-b border-eq-border flex items-center justify-between px-4">
+        <div className="h-16 bg-eq-surface border-b border-eq-border flex items-center justify-between px-4">
             <div className="flex items-center space-x-3">
-                <h1 className="text-lg font-bold">{ticker}</h1>
-                <span className="text-xs text-eq-text-secondary border border-eq-border px-1 py-0.5 rounded">NSE</span>
-                <span className="text-eq-green text-xs font-medium flex items-center ml-2">
-                    <span className="h-2 w-2 rounded-full bg-eq-green mr-1.5"></span>
-                    LIVE
+                <h1 className="text-[16px] font-semibold">{ticker}</h1>
+                <span className="text-[11px] text-eq-text-secondary border border-eq-border px-1.5 py-0.5 rounded">NSE</span>
+                <span className="text-eq-green text-[11px] font-medium flex items-center ml-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-eq-green mr-1.5"></span>
+                    Live
                 </span>
             </div>
             {currentPrice && (
                 <div className="flex items-center space-x-3">
-                    <div className="text-lg font-mono font-bold">₹{currentPrice.toFixed(2)}</div>
-                    <div className={`font-mono text-sm font-medium ${isUp ? 'text-eq-green' : 'text-eq-red'}`}>
+                    <div className="text-[24px] font-semibold tracking-tight">₹{currentPrice.toFixed(2)}</div>
+                    <div className={`text-[13px] font-medium ${isUp ? 'text-eq-green' : 'text-eq-red'}`}>
                         {isUp ? '+' : ''}{priceChange.toFixed(2)} ({isUp ? '+' : ''}{priceChangePct.toFixed(2)}%)
                     </div>
                 </div>
@@ -261,10 +261,10 @@ const StockAnalysis = () => {
                     <button 
                         key={tf.value} 
                         onClick={() => setInterval(tf.value)}
-                        className={`px-2 py-1 text-xs font-medium transition-colors ${
+                        className={`px-2 py-1 text-[13px] transition-colors ${
                             interval === tf.value 
-                            ? 'text-eq-blue border-b-2 border-eq-blue' 
-                            : 'text-eq-text-secondary hover:text-eq-text'
+                            ? 'text-eq-purple border-b-2 border-eq-purple font-medium' 
+                            : 'text-eq-text-secondary hover:text-eq-text font-normal'
                         }`}
                     >
                         {tf.label}
@@ -319,10 +319,10 @@ const StockAnalysis = () => {
                     <button 
                         key={r.value} 
                         onClick={() => setRange(r.value)}
-                        className={`px-2 py-1 text-xs font-medium transition-colors rounded ${
+                        className={`px-2 py-1 text-[13px] transition-colors rounded ${
                             range === r.value 
-                            ? 'bg-eq-blue text-eq-text' 
-                            : 'text-eq-text-secondary hover:bg-eq-surface-elevated hover:text-eq-text'
+                            ? 'bg-eq-purple text-eq-text font-medium' 
+                            : 'text-eq-text-secondary hover:bg-eq-surface-elevated hover:text-eq-text font-normal'
                         }`}
                     >
                         {r.label}
@@ -335,7 +335,7 @@ const StockAnalysis = () => {
       {/* Right Column: AI Analysis */}
       <div className="w-full lg:w-[380px] flex flex-col bg-eq-surface border-l border-eq-border overflow-y-auto">
         <div className="p-4 border-b border-eq-border">
-            <h2 className="text-sm font-semibold text-eq-blue uppercase tracking-wide">
+            <h2 className="text-[14px] font-semibold text-eq-purple tracking-wide">
                 EquiNexa AI Analyst
             </h2>
         </div>
@@ -353,9 +353,9 @@ const StockAnalysis = () => {
                     <>
                         {/* Summary Block */}
                         <div>
-                            <div className="text-xs text-eq-text-secondary uppercase mb-1 tracking-wider">AI Market Bias</div>
-                            <div className="text-lg font-bold text-eq-green">BULLISH</div>
-                            <div className="text-xs text-eq-text-secondary mt-1">Confidence: <span className="font-mono text-eq-text">78%</span></div>
+                            <div className="text-[11px] text-eq-text-secondary uppercase mb-1 tracking-wider">AI Market Bias</div>
+                            <div className="text-[16px] font-semibold text-eq-green">Bullish</div>
+                            <div className="text-[12px] text-eq-text-secondary mt-1">Confidence: <span className="text-eq-text font-medium">78%</span></div>
                         </div>
                         
                         {/* Evidence */}
@@ -380,7 +380,7 @@ const StockAnalysis = () => {
                         {/* Levels */}
                         <div>
                             <div className="text-xs text-eq-text-secondary uppercase mb-2 tracking-wider">Key Levels</div>
-                            <div className="space-y-1 font-mono text-sm border border-eq-border rounded bg-eq-surface-elevated overflow-hidden">
+                            <div className="space-y-1 text-sm border border-eq-border rounded bg-eq-surface-elevated overflow-hidden font-medium">
                                 <div className="flex justify-between items-center p-2 border-b border-eq-border">
                                     <span className="text-eq-text-secondary">Entry Zone</span>
                                     <span>₹2,510 - ₹2,530</span>
@@ -419,7 +419,7 @@ const StockAnalysis = () => {
             <button 
               onClick={runAnalysis}
               disabled={isAnalyzing}
-              className="w-full py-2 bg-eq-blue hover:bg-eq-blue-hover disabled:opacity-50 text-eq-text text-sm rounded font-medium transition-colors flex items-center justify-center"
+              className="w-full py-2 bg-eq-purple hover:bg-eq-purple-hover disabled:opacity-50 text-eq-text text-[13px] rounded font-medium transition-colors flex items-center justify-center"
             >
               Analyze Market
             </button>

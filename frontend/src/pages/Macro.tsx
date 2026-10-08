@@ -35,8 +35,8 @@ const Macro = () => {
             </div>
             
             <div className="flex items-end space-x-3">
-              <span className="text-3xl font-mono font-bold text-text-primary">{item.value}</span>
-              <span className={`font-mono text-sm font-medium mb-1 flex items-center ${
+              <span className="text-3xl font-bold text-text-primary">{item.value}</span>
+              <span className={`text-sm font-medium mb-1 flex items-center ${
                 item.trend === 'up' ? 'text-market-up' : item.trend === 'down' ? 'text-market-down' : 'text-text-muted'
               }`}>
                 {item.trend === 'up' && <TrendingUp className="w-4 h-4 mr-1" />}

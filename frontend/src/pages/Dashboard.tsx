@@ -35,7 +35,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-eq-border">
         <div>
-          <h1 className="text-xl font-bold flex items-center text-eq-text">
+          <h1 className="text-xl font-semibold flex items-center text-eq-text">
             Global Markets Overview
           </h1>
           <p className="text-xs text-eq-text-secondary mt-1">Real-time index tracking and market breadth analysis.</p>
@@ -57,14 +57,14 @@ const Dashboard = () => {
             className="bg-eq-surface border border-eq-border rounded p-4 hover:border-eq-border-active transition-all cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-2">
-              <h3 className="font-semibold text-sm text-eq-text-secondary group-hover:text-eq-text transition-colors">{idx.name}</h3>
-              <span className={`text-xs font-mono font-medium ${idx.trend === 'up' ? 'text-eq-green' : 'text-eq-red'}`}>
+              <h3 className="font-semibold text-[15px] text-eq-text-secondary group-hover:text-eq-text transition-colors">{idx.name}</h3>
+              <span className={`text-xs font-medium ${idx.trend === 'up' ? 'text-eq-green' : 'text-eq-red'}`}>
                 {idx.percent}
               </span>
             </div>
-            <div className="flex flex-col">
-              <div className="text-xl font-mono font-bold text-eq-text">{idx.value}</div>
-              <div className={`font-mono text-xs font-medium flex items-center mt-0.5 ${idx.trend === 'up' ? 'text-eq-green' : 'text-eq-red'}`}>
+            <div className="flex flex-col mt-2">
+              <div className="text-[22px] font-semibold text-eq-text tracking-tight">{idx.value}</div>
+              <div className={`text-sm font-medium flex items-center mt-1 ${idx.trend === 'up' ? 'text-eq-green' : 'text-eq-red'}`}>
                 {idx.change}
               </div>
             </div>
@@ -76,48 +76,48 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Global Market Status */}
-        <div className="bg-card-bg border border-border-subtle rounded-lg p-5 lg:col-span-1">
-          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4 flex items-center">
+        <div className="bg-eq-surface border border-eq-border rounded p-4 lg:col-span-1">
+          <h3 className="text-xs font-semibold text-eq-text-secondary uppercase tracking-wider mb-4 flex items-center">
             <Globe className="w-4 h-4 mr-2" /> Regional Status
           </h3>
-          <div className="space-y-4 text-sm font-medium">
-            <div className="flex justify-between items-center p-3 bg-black-bg border border-border-subtle rounded-lg">
-              <span>Asia Pacific</span>
-              <span className="text-market-up">Closed</span>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-eq-border">
+              <span className="text-[13px] text-eq-text font-medium">Asia Pacific</span>
+              <span className="text-[12px] font-medium text-eq-text-secondary flex items-center"><span className="h-1.5 w-1.5 rounded-full bg-eq-text-disabled mr-1.5"></span>Closed</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-black-bg border border-border-subtle rounded-lg">
-              <span>Europe (EMEA)</span>
-              <span className="text-market-up">Open</span>
+            <div className="flex justify-between items-center py-2 border-b border-eq-border">
+              <span className="text-[13px] text-eq-text font-medium">Europe (EMEA)</span>
+              <span className="text-[12px] font-medium text-eq-green flex items-center"><span className="h-1.5 w-1.5 rounded-full bg-eq-green mr-1.5"></span>Open</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-black-bg border border-border-subtle rounded-lg">
-              <span>Americas</span>
-              <span className="text-text-muted">Pre-Market</span>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-[13px] text-eq-text font-medium">Americas</span>
+              <span className="text-[12px] font-medium text-eq-orange flex items-center"><span className="h-1.5 w-1.5 rounded-full bg-eq-orange mr-1.5"></span>Pre-Market</span>
             </div>
           </div>
         </div>
 
         {/* Top Movers / AI Analysis */}
-        <div className="bg-card-bg border border-border-subtle rounded-lg p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4 flex items-center">
+        <div className="bg-eq-surface border border-eq-border rounded p-4 lg:col-span-2">
+          <h3 className="text-xs font-semibold text-eq-text-secondary uppercase tracking-wider mb-4 flex items-center">
             <BarChart3 className="w-4 h-4 mr-2" /> Top Market Movers
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {MOCK_TOP_MOVERS.map(stock => (
-              <div key={stock.symbol} className="bg-black-bg border border-border-subtle rounded-lg p-3 text-center">
-                <div className="font-bold mb-1">{stock.symbol}</div>
-                <div className="font-mono text-sm text-text-muted mb-1">₹{stock.price}</div>
-                <div className={`font-mono text-xs font-bold ${stock.change.startsWith('+') ? 'text-market-up' : 'text-market-down'}`}>
+              <div key={stock.symbol} className="bg-eq-surface-elevated border border-eq-border rounded p-3 text-center">
+                <div className="font-semibold text-sm mb-1 text-eq-text">{stock.symbol}</div>
+                <div className="text-sm text-eq-text-secondary mb-1">₹{stock.price}</div>
+                <div className={`text-[13px] font-medium ${stock.change.startsWith('+') ? 'text-eq-green' : 'text-eq-red'}`}>
                   {stock.change}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-6 p-4 bg-blue-900/10 border border-blue-500/20 rounded-lg flex items-start">
-            <PieChart className="w-5 h-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
+          <div className="mt-4 p-4 bg-eq-purple-muted border border-eq-purple/20 rounded flex items-start">
+            <PieChart className="w-5 h-5 text-eq-purple mr-3 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-sm font-bold text-blue-400 mb-1">EquiNexa AI Summary</h4>
-              <p className="text-sm text-text-secondary leading-relaxed">
+              <h4 className="text-[14px] font-semibold text-eq-purple mb-1">EquiNexa AI Summary</h4>
+              <p className="text-[13px] text-eq-text-secondary leading-relaxed">
                 Global equities are demonstrating resilience today. Technology and Banking sectors are leading the indices higher on the back of strong US economic data, offsetting localized geopolitical weakness in energy.
               </p>
             </div>
@@ -125,21 +125,21 @@ const Dashboard = () => {
         </div>
 
         {/* Live News Feed - First Page */}
-        <div className="bg-card-bg border border-border-subtle rounded-lg p-5 lg:col-span-3 mt-2">
-          <div className="flex items-center justify-between mb-4 border-b border-border-subtle pb-3">
-            <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider flex items-center">
-              <FileText className="w-4 h-4 mr-2 text-text-muted" /> Live Market News
+        <div className="bg-eq-surface border border-eq-border rounded p-4 lg:col-span-3 mt-2">
+          <div className="flex items-center justify-between mb-4 border-b border-eq-border pb-3">
+            <h3 className="text-xs font-semibold text-eq-text uppercase tracking-wider flex items-center">
+              <FileText className="w-4 h-4 mr-2 text-eq-text-muted" /> Live Market News
             </h3>
-            <button onClick={() => navigate('/news')} className="text-xs text-blue-500 hover:underline">View All News</button>
+            <button onClick={() => navigate('/news')} className="text-xs text-eq-purple hover:underline">View All News</button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {MOCK_LATEST_NEWS.map(news => (
-              <div key={news.id} onClick={() => navigate('/news')} className="p-4 bg-black-bg border border-border-subtle rounded-lg hover:border-blue-500/30 cursor-pointer transition-colors group">
-                <div className="flex items-center text-xs text-text-muted mb-2">
-                  <span className="font-semibold text-text-secondary mr-2">{news.source}</span>
+              <div key={news.id} onClick={() => navigate('/news')} className="p-4 bg-eq-bg border border-eq-border rounded hover:border-eq-purple/50 cursor-pointer transition-colors group">
+                <div className="flex items-center text-[11px] text-eq-text-muted mb-2">
+                  <span className="font-semibold text-eq-text-secondary mr-2">{news.source}</span>
                   <Clock className="w-3 h-3 mr-1" /> {news.time}
                 </div>
-                <h4 className="text-sm font-bold text-text-primary group-hover:text-blue-400 transition-colors leading-relaxed">
+                <h4 className="text-[13px] font-semibold text-eq-text group-hover:text-eq-purple transition-colors leading-relaxed">
                   {news.headline}
                 </h4>
               </div>

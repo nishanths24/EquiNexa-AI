@@ -127,8 +127,8 @@ const Forex = () => {
                   <div className="text-xs text-text-muted mt-0.5">FX Provider</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono font-medium">{pair.price}</div>
-                  <div className={`text-xs font-mono font-medium flex items-center justify-end mt-0.5 ${pair.trend === 'up' ? 'text-market-up' : 'text-market-down'}`}>
+                  <div className="font-medium">{pair.price}</div>
+                  <div className={`text-xs font-medium flex items-center justify-end mt-0.5 ${pair.trend === 'up' ? 'text-market-up' : 'text-market-down'}`}>
                     {pair.trend === 'up' ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 mr-0.5" />}
                     {pair.percent}
                   </div>
@@ -146,8 +146,8 @@ const Forex = () => {
             <div>
               <div className="text-sm text-text-muted mb-1">Current Rate</div>
               <div className="flex items-end space-x-3">
-                <span className="text-3xl font-mono font-bold">{activePair.price}</span>
-                <span className={`font-mono text-sm font-medium mb-1 flex items-center ${activePair.trend === 'up' ? 'text-market-up' : 'text-market-down'}`}>
+                <span className="text-3xl font-bold">{activePair.price}</span>
+                <span className={`text-sm font-medium mb-1 flex items-center ${activePair.trend === 'up' ? 'text-market-up' : 'text-market-down'}`}>
                   {activePair.change} ({activePair.percent})
                 </span>
               </div>
