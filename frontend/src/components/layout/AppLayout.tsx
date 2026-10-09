@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, DollarSign, Globe, Filter, Star, Bell, ChevronDown, Home, User } from 'lucide-react';
+import { Activity, LineChart, Beaker, Image as ImageIcon, Settings, Search, FileText, Globe, Filter, Star, Bell, ChevronDown, Home, User } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { searchMarkets, type SearchResult } from '../../services/api/markets';
 import { supabase } from '../../lib/supabase';
@@ -96,7 +96,6 @@ const AppLayout = () => {
     { name: 'Alerts', path: '/alerts', icon: Bell },
     { name: 'Screener', path: '/screener', icon: Filter },
     { name: 'News', path: '/news', icon: FileText },
-    { name: 'Forex', path: '/forex', icon: DollarSign },
     { name: 'Macro', path: '/macro', icon: Globe },
   ];
 

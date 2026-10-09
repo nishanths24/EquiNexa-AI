@@ -134,8 +134,10 @@ def get_indices():
         "NIFTY 50": "^NSEI",
         "SENSEX": "^BSESN",
         "NIFTY BANK": "^NSEBANK",
+        "INDIA VIX": "^INDIAVIX",
         "S&P 500": "^GSPC",
-        "NASDAQ": "^IXIC"
+        "NASDAQ": "^IXIC",
+        "Dow Jones": "^DJI"
     }
     
     results = []
@@ -389,18 +391,18 @@ class ResearchQuery(BaseModel):
     ticker: str
     query: str
 
-def get_gemini_client():
-    api_key = os.environ.get("GEMINI_API_KEY")
+def get_groq_client():
+    api_key = os.environ.get("GROQ_API_KEY")
     if not api_key or "YOUR_API_KEY_HERE" in api_key:
         raise HTTPException(
             status_code=501, 
-            detail="LLM provider is not configured. Please add GEMINI_API_KEY to your .env file."
+            detail="LLM provider is not configured. Please add GROQ_API_KEY to your .env file."
         )
     try:
-        from google import genai
-        return genai.Client(api_key=api_key)
+        from groq import Groq
+        return Groq(api_key=api_key)
     except ImportError:
-        raise HTTPException(status_code=500, detail="google-genai SDK is not installed.")
+        raise HTTPException(status_code=500, detail="groq SDK is not installed.")
 
 import random
 import asyncio
@@ -433,21 +435,63 @@ def _parse_and_validate_json(text: str, required_keys: list):
             
     return data
 
-def _parse_gemini_error(e):
+def _parse_groq_error(e):
     err_str = str(e).lower()
+    if "401" in err_str or "unauthenticated" in err_str or "api key" in err_str or "invalid authentication" in err_str:
+        return False, 401
+    if "403" in err_str or "permission denied" in err_str:
+        return False, 403
     if "503" in err_str or "unavailable" in err_str or "overloaded" in err_str:
         return True, 503
-    if "429" in err_str or "quota" in err_str or "too many requests" in err_str:
+    if "429" in err_str or "quota" in err_str or "too many requests" in err_str or "exhausted" in err_str:
         return True, 429
+    if "timeout" in err_str or "deadline" in err_str:
+        return True, 504
     if "500" in err_str or "internal server error" in err_str:
         return True, 500
-    if "timeout" in err_str:
-        return True, 504
     return False, 500
 
-async def generate_with_retry_async(client, model, fallback_model, contents, config, max_retries=3):
+async def generate_with_retry_async(client, model, fallback_model, contents, max_retries=3):
+    import base64
+    import io
+    
+    messages = []
+    if isinstance(contents, list):
+        prompt = contents[0]
+        img = contents[1]
+        
+        buffered = io.BytesIO()
+        # Robustly convert to RGB for JPEG encoding:
+        # Modes with alpha (RGBA, LA, PA) get composited onto white before converting.
+        # Palette (P), CMYK and other non-RGB modes are converted directly.
+        if img.mode in ('RGBA', 'LA', 'PA'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'LA':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1])  # alpha channel as mask
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        img.save(buffered, format="JPEG", quality=95)
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        
+        messages.append({
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{img_str}",
+                    },
+                },
+            ]
+        })
+    else:
+        messages.append({"role": "user", "content": contents})
+        
     models_to_try = [model]
-    if fallback_model:
+    if fallback_model and fallback_model != model:
         models_to_try.append(fallback_model)
         
     for current_model in models_to_try:
@@ -455,86 +499,132 @@ async def generate_with_retry_async(client, model, fallback_model, contents, con
             try:
                 global_breaker.check()
                 res = await asyncio.to_thread(
-                    client.models.generate_content,
+                    client.chat.completions.create,
                     model=current_model,
-                    contents=contents,
-                    config=config
+                    messages=messages,
+                    response_format={"type": "json_object"}
                 )
                 global_breaker.record_success()
-                return res
+                class MockResponse:
+                    def __init__(self, text):
+                        self.text = text
+                return MockResponse(res.choices[0].message.content)
             except CircuitBreakerOpen as e:
                 raise HTTPException(status_code=503, detail=str(e))
             except Exception as e:
                 global_breaker.record_failure()
                 err_str = str(e).lower()
-                if "404" in err_str or "not found" in err_str:
+                if "404" in err_str or "not found" in err_str or "does not exist" in err_str:
                     break # Break retry loop, try fallback
                     
-                is_retryable, last_status = _parse_gemini_error(e)
+                is_retryable, last_status = _parse_groq_error(e)
                 if not is_retryable:
-                    raise HTTPException(status_code=500, detail="Provider API request failed.")
+                    if last_status == 401:
+                        raise HTTPException(status_code=401, detail="Invalid API configuration or authentication.")
+                    raise HTTPException(status_code=500, detail=f"Provider API request failed: {str(e)}")
                     
                 if attempt == max_retries:
                     if current_model == models_to_try[-1]:
                         msgs = {
-                            429: "Gemini API quota exceeded or rate limited. Please try again later.",
-                            503: "Gemini API is currently overloaded or unavailable. Please try again later.",
-                            504: "Gemini API request timed out.",
-                            500: "Gemini API encountered an internal error."
+                            429: "The configured AI provider's quota or rate limit has been reached.",
+                            503: "Service temporarily overloaded. Please try again later.",
+                            504: "Provider API request timed out.",
+                            500: "Provider API encountered an internal error."
                         }
-                        raise HTTPException(status_code=last_status, detail=msgs[last_status])
+                        raise HTTPException(status_code=last_status, detail=msgs.get(last_status, "Provider error."))
                     else:
                         break # Exhausted retries, try fallback
                         
                 delay = 1.0 * (2 ** attempt) + random.uniform(0, 1)
                 await asyncio.sleep(delay)
                 
-    raise HTTPException(status_code=404, detail="Configured Gemini model not found.")
+    raise HTTPException(status_code=404, detail="Configured Groq model not found or does not support vision.")
 
-def generate_with_retry_sync(client, model, fallback_model, contents, config, max_retries=3):
+def generate_with_retry_sync(client, model, fallback_model, contents, max_retries=3):
+    messages = []
+    if isinstance(contents, list):
+        import base64
+        import io
+        prompt = contents[0]
+        img = contents[1]
+        
+        buffered = io.BytesIO()
+        # Robustly convert to RGB for JPEG encoding
+        if img.mode in ('RGBA', 'LA', 'PA'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'LA':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1])
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        img.save(buffered, format="JPEG", quality=95)
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        
+        messages.append({
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{img_str}",
+                    },
+                },
+            ]
+        })
+    else:
+        messages.append({"role": "user", "content": contents})
+
     models_to_try = [model]
-    if fallback_model:
+    if fallback_model and fallback_model != model:
         models_to_try.append(fallback_model)
         
     for current_model in models_to_try:
         for attempt in range(max_retries + 1):
             try:
                 global_breaker.check()
-                res = client.models.generate_content(
+                res = client.chat.completions.create(
                     model=current_model,
-                    contents=contents,
-                    config=config
+                    messages=messages,
+                    response_format={"type": "json_object"}
                 )
                 global_breaker.record_success()
-                return res
+                class MockResponse:
+                    def __init__(self, text):
+                        self.text = text
+                return MockResponse(res.choices[0].message.content)
             except CircuitBreakerOpen as e:
                 raise HTTPException(status_code=503, detail=str(e))
             except Exception as e:
                 global_breaker.record_failure()
                 err_str = str(e).lower()
-                if "404" in err_str or "not found" in err_str:
+                if "404" in err_str or "not found" in err_str or "does not exist" in err_str:
                     break # Break retry loop, try fallback
                     
-                is_retryable, last_status = _parse_gemini_error(e)
+                is_retryable, last_status = _parse_groq_error(e)
                 if not is_retryable:
-                    raise HTTPException(status_code=500, detail="Provider API request failed.")
+                    if last_status == 401:
+                        raise HTTPException(status_code=401, detail="Invalid API configuration or authentication.")
+                    raise HTTPException(status_code=500, detail=f"Provider API request failed: {str(e)}")
                     
                 if attempt == max_retries:
                     if current_model == models_to_try[-1]:
                         msgs = {
-                            429: "Gemini API quota exceeded or rate limited. Please try again later.",
-                            503: "Gemini API is currently overloaded or unavailable. Please try again later.",
-                            504: "Gemini API request timed out.",
-                            500: "Gemini API encountered an internal error."
+                            429: "The configured AI provider's quota or rate limit has been reached.",
+                            503: "Service temporarily overloaded. Please try again later.",
+                            504: "Provider API request timed out.",
+                            500: "Provider API encountered an internal error."
                         }
-                        raise HTTPException(status_code=last_status, detail=msgs[last_status])
+                        raise HTTPException(status_code=last_status, detail=msgs.get(last_status, "Provider error."))
                     else:
                         break # Exhausted retries, try fallback
                         
                 delay = 1.0 * (2 ** attempt) + random.uniform(0, 1)
+                import time
                 time.sleep(delay)
                 
-    raise HTTPException(status_code=404, detail="Configured Gemini model not found.")
+    raise HTTPException(status_code=404, detail="Configured Groq model not found or does not support vision.")
 
 @app.post("/api/v1/vision/analyze")
 async def analyze_chart(
@@ -542,7 +632,7 @@ async def analyze_chart(
     ticker: Optional[str] = Form(None),
     timeframe: Optional[str] = Form(None)
 ):
-    client = get_gemini_client()
+    client = get_groq_client()
     
     if file.content_type not in ["image/jpeg", "image/png", "image/webp"]:
         raise HTTPException(status_code=400, detail="Unsupported file format. Please upload JPEG, PNG, or WebP.")
@@ -565,52 +655,73 @@ async def analyze_chart(
     Distinguish clear, visible observations from uncertain interpretations.
     Format your response EXACTLY as a JSON object with these exact keys:
     {{
-        "has_sufficient_evidence": bool (true if it's a valid clear chart, false if not),
-        "support_levels": [list of string price levels, e.g. "150.50" or "Unavailable"],
-        "resistance_levels": [list of string price levels, e.g. "160.00" or "Unavailable"],
-        "detected_trend": "bullish" | "bearish" | "neutral" | "unclear",
-        "patterns": [list of strings describing patterns like "bull flag", "doji"],
-        "reasoning": "A paragraph explaining your observations, noting any uncertainty."
+        "market_direction": {{
+            "bias": "bullish" | "bearish" | "neutral" | "unclear",
+            "evidence": "Evidence supporting the assessment",
+            "alternative": "Alternative scenario",
+            "confidence": "Confidence estimate with explanation"
+        }},
+        "trade_setup": {{
+            "entry_zone": "Potential entry zone or Unavailable",
+            "stop_loss": "Stop-loss level or invalidation condition or Unavailable",
+            "targets": ["List of potential targets"],
+            "risk_reward": "Risk/reward ratio when calculable or Unavailable",
+            "invalidation": "Conditions that invalidate the setup",
+            "timeframe": "Relevant timeframe or Unavailable"
+        }},
+        "risk_assessment": {{
+            "volatility": "Volatility and uncertainty",
+            "key_levels": "Important support/resistance",
+            "avoid_reasons": "Reasons to avoid entering a trade",
+            "is_uncertain": bool
+        }},
+        "patterns": ["list of strings describing patterns"],
+        "has_sufficient_evidence": bool
     }}
     """
     
     try:
-        from google.genai import types
-        gemini_model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
-        gemini_fallback = os.environ.get("GEMINI_FALLBACK_MODEL")
+        groq_model = os.environ.get("GROQ_VISION_MODEL", "qwen/qwen3.8-27b")
+        groq_fallback = os.environ.get("GROQ_VISION_FALLBACK_MODEL", "qwen/qwen3.8-27b")
         response = await generate_with_retry_async(
             client=client,
-            model=gemini_model,
-            fallback_model=gemini_fallback,
-            contents=[prompt, img],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-            )
+            model=groq_model,
+            fallback_model=groq_fallback,
+            contents=[prompt, img]
         )
         
-        required_keys = ["has_sufficient_evidence", "support_levels", "resistance_levels", "detected_trend", "patterns", "reasoning"]
+        required_keys = ["market_direction", "trade_setup", "risk_assessment", "patterns", "has_sufficient_evidence"]
         data = _parse_and_validate_json(response.text, required_keys)
         
         return {
             "has_sufficient_evidence": bool(data.get("has_sufficient_evidence", True)),
-            "support_levels": data.get("support_levels"),
-            "resistance_levels": data.get("resistance_levels"),
-            "detected_trend": str(data.get("detected_trend")),
-            "patterns": data.get("patterns"),
-            "reasoning": str(data.get("reasoning"))
+            "market_direction": data.get("market_direction"),
+            "trade_setup": data.get("trade_setup"),
+            "risk_assessment": data.get("risk_assessment"),
+            "patterns": data.get("patterns")
         }
         
     except HTTPException:
         raise
     except Exception as e:
         error_str = str(e).lower()
-        if "429" in error_str or "quota" in error_str or "rate limit" in error_str:
-            raise HTTPException(status_code=429, detail="Quota exceeded. AI Analysis is currently unavailable due to provider rate limits. Please try again later.")
-        raise HTTPException(status_code=500, detail=f"Provider returned malformed JSON or an unexpected error occurred: {str(e)}")
+        if "429" in error_str or "quota" in error_str or "rate limit" in error_str or "exhausted" in error_str:
+            raise HTTPException(status_code=429, detail="The configured AI provider's quota or rate limit has been reached.")
+        if "401" in error_str or "unauthenticated" in error_str:
+            raise HTTPException(status_code=401, detail="Invalid API configuration or authentication.")
+        if "timeout" in error_str:
+            raise HTTPException(status_code=504, detail="Provider API request timed out.")
+        if "503" in error_str or "overloaded" in error_str:
+            raise HTTPException(status_code=503, detail="Service temporarily overloaded. Please try again later.")
+        if any(kw in error_str for kw in ["cannot write", "mode", "codec", "corrupt", "truncated", "decompression"]):
+            raise HTTPException(status_code=400, detail=f"Image processing failed: {str(e)}. Please upload a valid chart screenshot (JPEG, PNG, or WebP).")
+        if "json" in error_str or "malformed" in error_str or "missing required field" in error_str:
+            raise HTTPException(status_code=500, detail="AI model returned an unexpected response format. Please try again.")
+        raise HTTPException(status_code=500, detail=f"Unexpected error during chart analysis: {str(e)}")
 
 @app.post("/api/v1/research/query")
 def research_query(req: ResearchQuery):
-    client = get_gemini_client()
+    client = get_groq_client()
     
     ticker = req.ticker
     try:
@@ -691,33 +802,51 @@ def research_query(req: ResearchQuery):
     
     Provide your research in a structured JSON format with the following keys:
     {{
-        "report": "Your detailed research report formatted in Markdown.",
+        "market_direction": {{
+            "bias": "bullish" | "bearish" | "neutral" | "unclear",
+            "evidence": "Evidence supporting the assessment",
+            "alternative": "Alternative scenario",
+            "confidence": "Confidence estimate with explanation"
+        }},
+        "trade_setup": {{
+            "entry_zone": "Potential entry zone or Unavailable",
+            "stop_loss": "Stop-loss level or invalidation condition or Unavailable",
+            "targets": ["List of potential targets"],
+            "risk_reward": "Risk/reward ratio when calculable or Unavailable",
+            "invalidation": "Conditions that invalidate the setup",
+            "timeframe": "Relevant timeframe or Unavailable"
+        }},
+        "risk_assessment": {{
+            "volatility": "Volatility and uncertainty",
+            "key_levels": "Important support/resistance",
+            "avoid_reasons": "Reasons to avoid entering a trade",
+            "is_uncertain": bool
+        }},
+        "news_summary": "Summary of news implications, distinguish reported facts from AI interpretation, explain if unavailable",
         "citations": ["List of sources you used, or 'Unverified' if none"],
         "disclaimer": "Informational purposes only. Not financial advice."
     }}
     """
     try:
-        from google.genai import types
-        gemini_model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
-        gemini_fallback = os.environ.get("GEMINI_FALLBACK_MODEL")
+        groq_model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+        groq_fallback = os.environ.get("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
         response = generate_with_retry_sync(
             client=client,
-            model=gemini_model,
-            fallback_model=gemini_fallback,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                max_output_tokens=1024,
-            )
+            model=groq_model,
+            fallback_model=groq_fallback,
+            contents=prompt
         )
         
-        required_keys = ["report", "citations", "disclaimer"]
+        required_keys = ["market_direction", "trade_setup", "risk_assessment", "news_summary", "citations", "disclaimer"]
         data = _parse_and_validate_json(response.text, required_keys)
         
         return {
             "ticker": req.ticker,
             "query": req.query,
-            "report": str(data.get("report")),
+            "market_direction": data.get("market_direction"),
+            "trade_setup": data.get("trade_setup"),
+            "risk_assessment": data.get("risk_assessment"),
+            "news_summary": str(data.get("news_summary")),
             "citations": data.get("citations"),
             "timestamp": datetime.utcnow().isoformat(),
             "disclaimer": str(data.get("disclaimer"))

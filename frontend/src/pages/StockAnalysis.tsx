@@ -22,6 +22,8 @@ const StockAnalysis = () => {
   // Independent Interval and Range
   const [interval, setInterval] = useState('1d');
   const [range, setRange] = useState('max');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const intervals = [
     { label: '1m', value: '1m' },
@@ -45,28 +47,43 @@ const StockAnalysis = () => {
   ];
 
   useEffect(() => {
-    // Fetch live market data for chart based on independent interval and period (range)
-    fetch(`http://localhost:8000/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=${range}&interval=${interval}`)
-      .then(res => res.json())
+    const controller = new AbortController();
+    setIsLoading(true);
+    setErrorMsg(null);
+
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const url = `${baseUrl}/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=${range}&interval=${interval}`;
+
+    fetch(url, { signal: controller.signal })
+      .then(async res => {
+        if (!res.ok) {
+           const errData = await res.json().catch(() => ({}));
+           const msg = errData.detail?.message || errData.detail || `HTTP error ${res.status}`;
+           throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+        }
+        return res.json();
+      })
       .then(data => {
         if (data.status === 'OK' && data.data && data.data.length > 0) {
           const isDailyOrAbove = ['1d', '1wk', '1mo'].includes(interval);
           
-          const formatted = data.data.map((d: any) => {
-            const timeValue = isDailyOrAbove 
-                ? d.time.split('T')[0] 
-                : (new Date(d.time).getTime() / 1000);
-                
-            return {
-              time: timeValue,
-              open: d.open,
-              high: d.high,
-              low: d.low,
-              close: d.close,
-              value: d.volume, // volume
-              color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)' // volume color
-            };
-          });
+          const formatted = data.data
+            .filter((d: any) => d.open != null && d.high != null && d.low != null && d.close != null && d.time != null)
+            .map((d: any) => {
+              const timeValue = isDailyOrAbove 
+                  ? d.time.split('T')[0] 
+                  : Math.floor(new Date(d.time).getTime() / 1000);
+                  
+              return {
+                time: timeValue,
+                open: d.open,
+                high: d.high,
+                low: d.low,
+                close: d.close,
+                value: d.volume || 0,
+                color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)'
+              };
+            });
           
           const uniqueData = Array.from(new Map(formatted.map((item: any) => [item.time, item])).values());
           const sorted = uniqueData.sort((a: any, b: any) => {
@@ -74,15 +91,30 @@ const StockAnalysis = () => {
             return a.time - b.time;
           });
           
-          setChartData(sorted);
+          if (sorted.length > 0) {
+              setChartData(sorted);
+              setErrorMsg(null);
+          } else {
+              setChartData([]);
+              setErrorMsg("No valid data available for this combination.");
+          }
         } else {
-            setChartData([]); // clear old data if invalid combination
+            setChartData([]);
+            setErrorMsg("No data returned from provider.");
         }
       })
       .catch(err => {
-          console.error(err);
-          setChartData([]);
+          if (err.name !== 'AbortError') {
+              console.error(err);
+              setChartData([]);
+              setErrorMsg(err.message || "Failed to fetch chart data.");
+          }
+      })
+      .finally(() => {
+          setIsLoading(false);
       });
+
+      return () => controller.abort();
   }, [ticker, interval, range]);
 
   useEffect(() => {
@@ -137,6 +169,7 @@ const StockAnalysis = () => {
       try {
         candlestickSeriesRef.current.setData(chartData);
         volumeSeriesRef.current.setData(chartData);
+        chart.timeScale().fitContent();
       } catch (e) {
         console.warn('Could not set chart data', e);
       }
@@ -212,7 +245,8 @@ const StockAnalysis = () => {
   const runAnalysis = async () => {
     setIsAnalyzing(true);
     try {
-      const res = await fetch('http://localhost:8000/api/v1/research/query', {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${baseUrl}/api/v1/research/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker, query: "Analyze current trends and give a quantitative prediction." })
@@ -290,8 +324,8 @@ const StockAnalysis = () => {
         {/* Chart Area */}
         <div className="flex-1 relative bg-eq-surface">
             {!chartData.length && (
-                <div className="absolute inset-0 flex items-center justify-center z-10 text-eq-text-muted">
-                    No data available for this combination.
+                <div className="absolute inset-0 flex items-center justify-center z-10 text-eq-text-muted px-4 text-center">
+                    {isLoading ? "Loading..." : (errorMsg || "No data available for this combination.")}
                 </div>
             )}
             
@@ -346,7 +380,57 @@ const StockAnalysis = () => {
         <div className="p-4 flex-1 flex flex-col space-y-6">
             {!isAnalyzing ? (
                 <>
-                {aiReport ? (
+                {aiReport && aiReport.market_direction ? (
+                    <div className="space-y-6">
+                      {/* Market Direction */}
+                      <div>
+                          <div className="text-[11px] text-eq-text-secondary uppercase mb-1 tracking-wider">AI Market Bias</div>
+                          <div className={`text-[16px] font-semibold capitalize ${aiReport.market_direction.bias === 'bullish' ? 'text-eq-green' : aiReport.market_direction.bias === 'bearish' ? 'text-eq-red' : 'text-eq-orange'}`}>
+                              {aiReport.market_direction.bias}
+                          </div>
+                          <div className="text-[12px] text-eq-text-secondary mt-1">Confidence: <span className="text-eq-text font-medium">{aiReport.market_direction.confidence}</span></div>
+                      </div>
+                      
+                      {/* Evidence */}
+                      <div>
+                          <div className="text-xs text-eq-text-secondary uppercase mb-2 tracking-wider">Technical Signal & Evidence</div>
+                          <p className="text-sm text-eq-text leading-relaxed">
+                              {aiReport.market_direction.evidence}
+                          </p>
+                      </div>
+                      
+                      {/* Levels */}
+                      {aiReport.trade_setup && (
+                          <div>
+                              <div className="text-xs text-eq-text-secondary uppercase mb-2 tracking-wider">Key Levels ({aiReport.trade_setup.timeframe})</div>
+                              <div className="space-y-1 text-sm border border-eq-border rounded bg-eq-surface-elevated overflow-hidden font-medium">
+                                  <div className="flex justify-between items-center p-2 border-b border-eq-border">
+                                      <span className="text-eq-text-secondary">Entry Zone</span>
+                                      <span>{aiReport.trade_setup.entry_zone}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center p-2 border-b border-eq-border">
+                                      <span className="text-eq-text-secondary">Target</span>
+                                      <span className="text-eq-green text-right">{Array.isArray(aiReport.trade_setup.targets) ? aiReport.trade_setup.targets.join(', ') : aiReport.trade_setup.targets}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center p-2">
+                                      <span className="text-eq-text-secondary">Stop Loss</span>
+                                      <span className="text-eq-red">{aiReport.trade_setup.stop_loss}</span>
+                                  </div>
+                              </div>
+                          </div>
+                      )}
+                      
+                      {/* News Summary */}
+                      {aiReport.news_summary && (
+                          <div>
+                              <div className="text-xs text-eq-text-secondary uppercase mb-2 tracking-wider">Recent Catalysts</div>
+                              <p className="text-sm text-eq-text leading-relaxed whitespace-pre-line">
+                                  {aiReport.news_summary}
+                              </p>
+                          </div>
+                      )}
+                    </div>
+                ) : aiReport && aiReport.report ? (
                     <div className="space-y-4">
                         <div className="text-sm text-eq-text leading-relaxed">
                             {aiReport.report}
