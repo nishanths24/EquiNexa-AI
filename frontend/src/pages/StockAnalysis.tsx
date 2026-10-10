@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi } from 'lightweight-charts';
 import { Maximize, Minimize, AlertCircle } from 'lucide-react';
+import { API_BASE } from '../services/api/client';
 
 const StockAnalysis = () => {
   const location = useLocation();
@@ -51,8 +52,7 @@ const StockAnalysis = () => {
     setIsLoading(true);
     setErrorMsg(null);
 
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const url = `${baseUrl}/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=${range}&interval=${interval}`;
+    const url = `${API_BASE}/api/v1/markets/history?ticker=${encodeURIComponent(ticker)}&period=${range}&interval=${interval}`;
 
     fetch(url, { signal: controller.signal })
       .then(async res => {
@@ -245,8 +245,7 @@ const StockAnalysis = () => {
   const runAnalysis = async () => {
     setIsAnalyzing(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${baseUrl}/api/v1/research/query`, {
+      const res = await fetch(`${API_BASE}/api/v1/research/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker, query: "Analyze current trends and give a quantitative prediction." })

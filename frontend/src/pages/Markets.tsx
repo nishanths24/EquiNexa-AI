@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Globe, AlertCircle, RefreshCw, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { API_BASE } from '../services/api/client';
 
 interface IndexData {
   name: string;
@@ -156,8 +157,7 @@ const Markets = () => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${baseUrl}/api/v1/markets/indices`);
+      const res = await fetch(`${API_BASE}/api/v1/markets/indices`);
       if (!res.ok) {
         throw new Error(`HTTP error ${res.status}`);
       }

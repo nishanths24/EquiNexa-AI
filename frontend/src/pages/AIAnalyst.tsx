@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AlertCircle, Upload, X, Search } from 'lucide-react';
+import { API_BASE } from '../services/api/client';
 
 const AIAnalyst = () => {
   const [ticker, setTicker] = useState('RELIANCE.NS');
@@ -41,7 +42,7 @@ const AIAnalyst = () => {
     setReport(null);
     
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const baseUrl = API_BASE;
       
       let res;
       if (mode === 'live') {

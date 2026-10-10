@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_BASE } from '../../services/api/client';
 
 export interface OhlcvData {
   time: string | number;
@@ -22,7 +23,7 @@ export function useOhlcv(ticker: string, period: string, interval: string) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/v1/markets/history?ticker=${ticker}&period=${period}&interval=${interval}`);
+        const res = await fetch(`${API_BASE}/api/v1/markets/history?ticker=${ticker}&period=${period}&interval=${interval}`);
         if (!res.ok) {
           throw new Error(`HTTP error ${res.status}`);
         }

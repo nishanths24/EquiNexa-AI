@@ -142,31 +142,69 @@ def get_indices():
     
     results = []
     try:
-        tickers = yf.Tickers(" ".join(symbols.values()))
         for name, symbol in symbols.items():
-            info = tickers.tickers[symbol].info
-            if not info or 'regularMarketPrice' not in info:
-                continue
-            
-            price = info.get('regularMarketPrice')
-            prev_close = info.get('previousClose')
-            if price and prev_close:
-                change = price - prev_close
-                change_pct = (change / prev_close) * 100
+            try:
+                t = yf.Ticker(symbol)
+                price = None
+                prev_close = None
+                currency = 'INR' if ('^NSE' in symbol or '^BSE' in symbol) else 'USD'
+                status = "DELAYED"
                 
-                results.append({
-                    "name": name,
-                    "symbol": symbol,
-                    "price": price,
-                    "change": change,
-                    "change_percent": change_pct,
-                    "currency": info.get('currency', 'INR' if '^NSE' in symbol or '^BSE' in symbol else 'USD'),
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "status": "LIVE" if info.get('regularMarketTime') else "DELAYED"
-                })
+                # 1. Try fast_info (fast, resilient, no quoteSummary crumb block)
+                try:
+                    fi = t.fast_info
+                    if fi:
+                        price = fi.last_price
+                        prev_close = fi.previous_close or fi.regular_market_previous_close
+                        if hasattr(fi, 'currency') and fi.currency:
+                            currency = fi.currency
+                except Exception:
+                    pass
+                
+                # 2. Fallback to chart history API if fast_info missing
+                if price is None or prev_close is None:
+                    try:
+                        hist = t.history(period="5d", interval="1d")
+                        if not hist.empty:
+                            price = float(hist['Close'].iloc[-1])
+                            prev_close = float(hist['Close'].iloc[-2]) if len(hist) >= 2 else float(hist['Open'].iloc[-1])
+                    except Exception:
+                        pass
+                
+                # 3. Fallback to info dict
+                if price is None or prev_close is None:
+                    try:
+                        info = t.info
+                        if info:
+                            price = info.get('regularMarketPrice') or price
+                            prev_close = info.get('previousClose') or prev_close
+                            if 'currency' in info:
+                                currency = info.get('currency', currency)
+                            if info.get('regularMarketTime'):
+                                status = "LIVE"
+                    except Exception:
+                        pass
+                
+                if price is not None and prev_close is not None and prev_close != 0:
+                    change = price - prev_close
+                    change_pct = (change / prev_close) * 100
+                    
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "price": round(float(price), 2),
+                        "change": round(float(change), 2),
+                        "change_percent": round(float(change_pct), 2),
+                        "currency": currency,
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "status": status
+                    })
+            except Exception:
+                continue
         
         response_data = {"status": "OK", "indices": results}
-        _indices_cache = {"timestamp": time.time(), "data": response_data}
+        if results:
+            _indices_cache = {"timestamp": time.time(), "data": response_data}
         return response_data
     except Exception as e:
         return {"status": "UNAVAILABLE", "reason": f"Provider failure: {str(e)}"}

@@ -17,7 +17,7 @@ class FeatureFlags(BaseSettings):
 
 class Settings(BaseSettings):
     """H2: Security. CORS allowlist, no wildcard credentials."""
-    FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+    FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "https://equi-nexa-ai.vercel.app,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173")
     feature_flags: FeatureFlags = FeatureFlags()
 
 settings = Settings()
