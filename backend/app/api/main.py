@@ -771,10 +771,21 @@ def research_query(req: ResearchQuery):
         query_symbol = inst.provider_symbols.get("yfinance", inst.symbol) if inst else ticker
         
         t = yf.Ticker(query_symbol)
-        info = t.info
+        info = t.info or {}
         
         # Check if the ticker exists and has an exchange
-        if not info or not info.get('exchange'):
+        exchange = info.get('exchange') if isinstance(info.get('exchange'), str) and info.get('exchange').strip() else None
+        if not exchange:
+            try:
+                fi_ex = getattr(t.fast_info, 'exchange', None)
+                if isinstance(fi_ex, str) and fi_ex.strip():
+                    exchange = fi_ex
+            except Exception:
+                pass
+        if not exchange and inst and isinstance(inst.exchange, str) and inst.exchange.strip():
+            exchange = inst.exchange
+
+        if not exchange:
             s = yf.Search(ticker)
             quotes = getattr(s, 'quotes', [])
             if not quotes:
@@ -792,12 +803,13 @@ def research_query(req: ResearchQuery):
         if news:
             news_str = "\n".join([f"- {n.get('title', '')} ({n.get('publisher', '')})" for n in news[:3]])
             
+        fi = getattr(t, 'fast_info', None)
         fundamentals = {
-            'marketCap': info.get('marketCap', 'N/A'),
+            'marketCap': info.get('marketCap') or getattr(fi, 'market_cap', 'N/A'),
             'forwardPE': info.get('forwardPE', 'N/A'),
             'dividendYield': info.get('dividendYield', 'N/A'),
-            'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh', 'N/A'),
-            'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow', 'N/A')
+            'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh') or getattr(fi, 'year_high', 'N/A'),
+            'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow') or getattr(fi, 'year_low', 'N/A')
         }
             
         context_data = f"""

@@ -36,13 +36,24 @@ class YFinanceProvider(MarketDataProvider):
 
     def get_metadata(self, symbol: str) -> dict:
         ticker = yf.Ticker(symbol)
-        info = ticker.info
+        info = ticker.info or {}
+        fi = getattr(ticker, 'fast_info', None)
+        ex = info.get('exchange') if isinstance(info.get('exchange'), str) else None
+        if not ex and fi:
+            fi_ex = getattr(fi, 'exchange', None)
+            if isinstance(fi_ex, str):
+                ex = fi_ex
+        curr = info.get('currency') if isinstance(info.get('currency'), str) else None
+        if not curr and fi:
+            fi_curr = getattr(fi, 'currency', None)
+            if isinstance(fi_curr, str):
+                curr = fi_curr
         return {
             'symbol': symbol,
-            'exchange': info.get('exchange', ''),
-            'currency': info.get('currency', ''),
-            'timezone': info.get('exchangeTimezoneName', ''),
-            'instrument_type': info.get('quoteType', ''),
+            'exchange': ex or '',
+            'currency': curr or '',
+            'timezone': info.get('exchangeTimezoneName') or (getattr(fi, 'timezone', '') if isinstance(getattr(fi, 'timezone', None), str) else ''),
+            'instrument_type': info.get('quoteType') or (getattr(fi, 'quote_type', '') if isinstance(getattr(fi, 'quote_type', None), str) else ''),
             'data_source': 'yfinance',
             'fetched_at': datetime.utcnow().isoformat()
         }
