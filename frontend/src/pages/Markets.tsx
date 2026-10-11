@@ -119,9 +119,9 @@ const MarketStatusBanner = () => {
   }, []);
 
   const sessionConfig = {
-    'pre-open': { bg: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-400', text: 'text-yellow-800', icon: Minus },
-    'open':     { bg: 'bg-green-50 border-green-200',  dot: 'bg-green-500',  text: 'text-green-800',  icon: TrendingUp },
-    'closed':   { bg: 'bg-gray-50 border-gray-200',    dot: 'bg-gray-400',   text: 'text-gray-700',   icon: TrendingDown },
+    'pre-open': { bg: 'bg-yellow-500/10 border-yellow-500/30', dot: 'bg-yellow-500', text: 'text-yellow-600', icon: Minus },
+    'open':     { bg: 'bg-green-500/10 border-green-500/30',  dot: 'bg-green-500',  text: 'text-green-600',  icon: TrendingUp },
+    'closed':   { bg: 'bg-eq-surface-elevated border-eq-border', dot: 'bg-eq-text-muted', text: 'text-eq-text-secondary', icon: TrendingDown },
   };
 
   const cfg = sessionConfig[status.session];
@@ -136,10 +136,10 @@ const MarketStatusBanner = () => {
           NSE/BSE — {status.label}
         </span>
         {status.holidayNote && (
-          <span className="text-xs text-gray-500">({status.holidayNote})</span>
+          <span className="text-xs text-eq-text-muted">({status.holidayNote})</span>
         )}
       </div>
-      <div className="flex items-center gap-1.5 text-gray-500 text-xs">
+      <div className="flex items-center gap-1.5 text-eq-text-muted text-xs">
         <Clock className="w-3.5 h-3.5" />
         <span>{status.nextEvent}</span>
       </div>

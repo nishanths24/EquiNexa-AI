@@ -11,23 +11,30 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Preserve the current light theme as the default unless a saved user preference exists
+  // Preserve Light Mode as default for users without a saved preference
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('theme') : null;
-    if (saved === 'dark' || saved === 'light') {
-      return saved;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark' || saved === 'light') {
+        return saved;
+      }
     }
     return 'light';
   });
 
   useEffect(() => {
+    const root = document.documentElement;
     if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light-theme');
+      root.classList.add('dark');
+      root.classList.remove('light-theme');
+      document.body.classList.add('dark');
+      document.body.classList.remove('light-theme');
       localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light-theme');
+      root.classList.remove('dark');
+      root.classList.add('light-theme');
+      document.body.classList.remove('dark');
+      document.body.classList.add('light-theme');
       localStorage.setItem('theme', 'light');
     }
   }, [theme]);

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi } from 'lightweight-charts';
 import { LineChart, DollarSign, ArrowUpRight, ArrowDownRight, RefreshCw, Activity } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const MOCK_FOREX_PAIRS = [
   { pair: 'USD/INR', price: '83.24', change: '+0.12', percent: '+0.14%', trend: 'up' },
@@ -24,6 +25,7 @@ const MOCK_LINE_DATA = [
 ];
 
 const Forex = () => {
+  const { theme } = useTheme();
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const lineSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -33,14 +35,15 @@ const Forex = () => {
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
+    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#0b0b0b' },
-        textColor: '#a3a3a3',
+        background: { type: ColorType.Solid, color: isDark ? '#161B22' : '#FFFFFF' },
+        textColor: isDark ? '#8B949E' : '#555A62',
       },
       grid: {
-        vertLines: { color: '#242424' },
-        horzLines: { color: '#242424' },
+        vertLines: { color: isDark ? '#272E38' : '#EEEEEE' },
+        horzLines: { color: isDark ? '#272E38' : '#EEEEEE' },
       },
       width: chartContainerRef.current.clientWidth,
       height: 450,
@@ -72,8 +75,24 @@ const Forex = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       chart.remove();
+      chartRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const isDark = theme === 'dark';
+    chartRef.current.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: isDark ? '#161B22' : '#FFFFFF' },
+        textColor: isDark ? '#8B949E' : '#555A62',
+      },
+      grid: {
+        vertLines: { color: isDark ? '#272E38' : '#EEEEEE' },
+        horzLines: { color: isDark ? '#272E38' : '#EEEEEE' },
+      },
+    });
+  }, [theme]);
 
   const refreshData = () => {
     setIsUpdating(true);

@@ -126,7 +126,7 @@ const StockAnalysis = () => {
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const isDark = theme === 'dark';
+    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: isDark ? '#161B22' : '#FFFFFF' },
@@ -225,10 +225,32 @@ const StockAnalysis = () => {
 
     return () => {
       resizeObserver.disconnect();
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
       chart.remove();
+      chartRef.current = null;
     };
-  }, [chartData, interval, theme]);
+  }, [chartData, interval]);
+
+  // Dynamically reapply chart theme options to existing instance on theme change
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const isDark = theme === 'dark';
+    chartRef.current.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: isDark ? '#161B22' : '#FFFFFF' },
+        textColor: isDark ? '#8B949E' : '#555A62',
+      },
+      grid: {
+        vertLines: { color: isDark ? '#272E38' : '#EEEEEE' },
+        horzLines: { color: isDark ? '#272E38' : '#EEEEEE' },
+      },
+      rightPriceScale: {
+        borderColor: isDark ? '#30363D' : '#E4E4E7',
+      },
+      timeScale: {
+        borderColor: isDark ? '#30363D' : '#E4E4E7',
+      },
+    });
+  }, [theme]);
 
   const handleFullscreenChange = () => {
     setIsFullscreen(!!document.fullscreenElement);

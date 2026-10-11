@@ -9,23 +9,24 @@ export class ChartEngine {
   private currentType: string = "Candlestick";
 
   constructor(container: HTMLElement) {
+    const isDark = typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false;
     this.chart = createChart(container, {
       layout: {
-        background: { type: ColorType.Solid, color: '#111827' }, // tailwind gray-900
-        textColor: '#9ca3af', // tailwind gray-400
+        background: { type: ColorType.Solid, color: isDark ? '#111827' : '#FFFFFF' },
+        textColor: isDark ? '#9ca3af' : '#555A62',
       },
       grid: {
-        vertLines: { color: '#374151' },
-        horzLines: { color: '#374151' },
+        vertLines: { color: isDark ? '#374151' : '#EEEEEE' },
+        horzLines: { color: isDark ? '#374151' : '#EEEEEE' },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
       },
       rightPriceScale: {
-        borderColor: '#374151',
+        borderColor: isDark ? '#374151' : '#E4E4E7',
       },
       timeScale: {
-        borderColor: '#374151',
+        borderColor: isDark ? '#374151' : '#E4E4E7',
         timeVisible: true,
         secondsVisible: false,
       },
@@ -74,6 +75,25 @@ export class ChartEngine {
     this.currentType = type;
     // In a full implementation we would remove current series and add a new one, preserving data.
     // Simplifying here for the initial engine.
+  }
+
+  public applyTheme(isDark: boolean) {
+    this.chart.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: isDark ? '#111827' : '#FFFFFF' },
+        textColor: isDark ? '#9ca3af' : '#555A62',
+      },
+      grid: {
+        vertLines: { color: isDark ? '#374151' : '#EEEEEE' },
+        horzLines: { color: isDark ? '#374151' : '#EEEEEE' },
+      },
+      rightPriceScale: {
+        borderColor: isDark ? '#374151' : '#E4E4E7',
+      },
+      timeScale: {
+        borderColor: isDark ? '#374151' : '#E4E4E7',
+      },
+    });
   }
 
   public destroy() {
