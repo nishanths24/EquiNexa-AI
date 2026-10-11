@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-@theme {
+:root {
   --color-eq-bg: #FFFFFF;
   --color-eq-surface: #FAFAFA;
   --color-eq-surface-card: #FFFFFF;
@@ -41,6 +41,86 @@
   --color-market-down: var(--color-eq-red);
 }
 
+:root.dark, html.dark {
+  --color-eq-bg: #0D1117;
+  --color-eq-surface: #161B22;
+  --color-eq-surface-card: #1C2128;
+  --color-eq-surface-elevated: #24292F;
+  --color-eq-border: #30363D;
+  --color-eq-border-active: #484F58;
+  
+  --color-eq-purple: #9D65E6;
+  --color-eq-purple-hover: #884DD0;
+  --color-eq-purple-muted: rgba(157, 101, 230, 0.15);
+  
+  --color-eq-green: #2EA043;
+  --color-eq-green-muted: rgba(46, 160, 67, 0.15);
+  
+  --color-eq-red: #F85149;
+  --color-eq-red-muted: rgba(248, 81, 73, 0.15);
+  
+  --color-eq-orange: #DB6D28;
+  --color-eq-orange-muted: rgba(219, 109, 40, 0.15);
+  
+  --color-eq-text: #F0F6FC;
+  --color-eq-text-secondary: #C9D1D9;
+  --color-eq-text-muted: #8B949E;
+  --color-eq-text-disabled: #6E7681;
+
+  /* Legacy Map */
+  --color-black-bg: var(--color-eq-bg);
+  --color-sidebar-bg: var(--color-eq-surface);
+  --color-header-bg: var(--color-eq-surface);
+  --color-card-bg: var(--color-eq-surface-card);
+  --color-hover-bg: var(--color-eq-surface-elevated);
+  --color-border-subtle: var(--color-eq-border);
+  --color-text-primary: var(--color-eq-text);
+  --color-text-secondary: var(--color-eq-text-secondary);
+  --color-text-muted: var(--color-eq-text-muted);
+  --color-market-up: var(--color-eq-green);
+  --color-market-down: var(--color-eq-red);
+}
+
+@theme {
+  --color-eq-bg: var(--color-eq-bg);
+  --color-eq-surface: var(--color-eq-surface);
+  --color-eq-surface-card: var(--color-eq-surface-card);
+  --color-eq-surface-elevated: var(--color-eq-surface-elevated);
+  --color-eq-border: var(--color-eq-border);
+  --color-eq-border-active: var(--color-eq-border-active);
+  
+  --color-eq-purple: var(--color-eq-purple);
+  --color-eq-purple-hover: var(--color-eq-purple-hover);
+  --color-eq-purple-muted: var(--color-eq-purple-muted);
+  
+  --color-eq-green: var(--color-eq-green);
+  --color-eq-green-muted: var(--color-eq-green-muted);
+  
+  --color-eq-red: var(--color-eq-red);
+  --color-eq-red-muted: var(--color-eq-red-muted);
+  
+  --color-eq-orange: var(--color-eq-orange);
+  --color-eq-orange-muted: var(--color-eq-orange-muted);
+  
+  --color-eq-text: var(--color-eq-text);
+  --color-eq-text-secondary: var(--color-eq-text-secondary);
+  --color-eq-text-muted: var(--color-eq-text-muted);
+  --color-eq-text-disabled: var(--color-eq-text-disabled);
+
+  /* Legacy Map */
+  --color-black-bg: var(--color-black-bg);
+  --color-sidebar-bg: var(--color-sidebar-bg);
+  --color-header-bg: var(--color-header-bg);
+  --color-card-bg: var(--color-card-bg);
+  --color-hover-bg: var(--color-hover-bg);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-market-up: var(--color-market-up);
+  --color-market-down: var(--color-market-down);
+}
+
 @layer base {
   body {
     -webkit-font-smoothing: antialiased;
@@ -48,6 +128,7 @@
     background-color: var(--color-eq-bg);
     color: var(--color-eq-text);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 }
 

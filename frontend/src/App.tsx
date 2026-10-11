@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -20,29 +21,31 @@ import Admin from './pages/Admin';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="markets" element={<Markets />} />
-          <Route path="analysis" element={<StockAnalysis />} />
-          <Route path="chart" element={<ChartWorkspace />} />
-          <Route path="ai" element={<AIAnalyst />} />
-          <Route path="news" element={<News />} />
-          <Route path="forex" element={<Forex />} />
-          <Route path="macro" element={<Macro />} />
-          <Route path="screener" element={<Screener />} />
-          <Route path="watchlist" element={<Watchlist />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="portfolio" element={<Portfolio />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="admin" element={<Admin />} />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="markets" element={<Markets />} />
+            <Route path="analysis" element={<StockAnalysis />} />
+            <Route path="chart" element={<ChartWorkspace />} />
+            <Route path="ai" element={<AIAnalyst />} />
+            <Route path="news" element={<News />} />
+            <Route path="forex" element={<Forex />} />
+            <Route path="macro" element={<Macro />} />
+            <Route path="screener" element={<Screener />} />
+            <Route path="watchlist" element={<Watchlist />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="portfolio" element={<Portfolio />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="admin" element={<Admin />} />
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

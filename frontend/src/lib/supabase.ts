@@ -1,9 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-// The user mentioned they put the keys in the .env file.
-// In Vite, these must be prefixed with VITE_ to be accessible in the browser.
-// We will fallback to process.env just in case, but Vite uses import.meta.env
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder_key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl && 
+  !supabaseUrl.includes('placeholder') && 
+  supabaseKey && 
+  !supabaseKey.includes('placeholder')
+);
+
+// Fallback to placeholder if not yet configured so module exports remain stable without throw
+const activeUrl = isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co';
+const activeKey = isSupabaseConfigured ? supabaseKey : 'placeholder_key';
+
+export const supabase = createClient(activeUrl, activeKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  }
+});

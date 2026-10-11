@@ -4,8 +4,10 @@ import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi } from 'lightweight-charts';
 import { Maximize, Minimize, AlertCircle } from 'lucide-react';
 import { API_BASE } from '../services/api/client';
+import { useTheme } from '../context/ThemeContext';
 
 const StockAnalysis = () => {
+  const { theme } = useTheme();
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const ticker = query.get('ticker') || 'RELIANCE.NS';
@@ -124,14 +126,15 @@ const StockAnalysis = () => {
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
+    const isDark = theme === 'dark';
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#FFFFFF' },
-        textColor: '#555A62', 
+        background: { type: ColorType.Solid, color: isDark ? '#161B22' : '#FFFFFF' },
+        textColor: isDark ? '#8B949E' : '#555A62', 
       },
       grid: {
-        vertLines: { color: '#EEEEEE' },
-        horzLines: { color: '#EEEEEE' },
+        vertLines: { color: isDark ? '#272E38' : '#EEEEEE' },
+        horzLines: { color: isDark ? '#272E38' : '#EEEEEE' },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -145,7 +148,7 @@ const StockAnalysis = () => {
         barSpacing: 8,
       },
       rightPriceScale: {
-        borderColor: '#E4E4E7',
+        borderColor: isDark ? '#30363D' : '#E4E4E7',
       }
     });
 
@@ -225,7 +228,7 @@ const StockAnalysis = () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       chart.remove();
     };
-  }, [chartData, interval]);
+  }, [chartData, interval, theme]);
 
   const handleFullscreenChange = () => {
     setIsFullscreen(!!document.fullscreenElement);

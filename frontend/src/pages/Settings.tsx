@@ -2,17 +2,14 @@ import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Sun, Moon, LogOut, LogIn, Monitor, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const Settings = () => {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { theme, toggleTheme } = useTheme();
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check initial theme
-    const isLight = document.documentElement.classList.contains('light-theme');
-    setTheme(isLight ? 'light' : 'dark');
-
     // Check Supabase session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -24,18 +21,6 @@ const Settings = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    if (newTheme === 'light') {
-      document.documentElement.classList.add('light-theme');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.classList.remove('light-theme');
-      localStorage.setItem('theme', 'dark');
-    }
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -60,16 +45,18 @@ const Settings = () => {
           <div className="flex items-center justify-between p-4 bg-black-bg border border-border-subtle rounded-lg">
             <div>
               <div className="font-medium text-text-primary">Theme Preference</div>
-              <div className="text-sm text-text-muted">Toggle between Dark and Light mode.</div>
+              <div className="text-sm text-text-muted">
+                Active: <span className="font-semibold text-text-primary">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+              </div>
             </div>
             <button 
               onClick={toggleTheme}
-              className="flex items-center px-4 py-2 bg-card-bg border border-border-subtle hover:bg-hover-bg rounded-md font-medium transition-colors"
+              className="flex items-center px-4 py-2 bg-card-bg border border-border-subtle hover:bg-hover-bg rounded-md font-medium transition-colors cursor-pointer"
             >
               {theme === 'dark' ? (
-                <><Sun className="w-4 h-4 mr-2" /> Light Mode</>
+                <><Sun className="w-4 h-4 mr-2 text-yellow-400" /> Switch to Light Mode</>
               ) : (
-                <><Moon className="w-4 h-4 mr-2" /> Dark Mode</>
+                <><Moon className="w-4 h-4 mr-2 text-eq-purple" /> Switch to Dark Mode</>
               )}
             </button>
           </div>
