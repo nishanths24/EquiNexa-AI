@@ -107,7 +107,11 @@ const StockAnalysis = () => {
           if (err.name !== 'AbortError') {
               console.error(err);
               setChartData([]);
-              setErrorMsg(err.message || "Failed to fetch chart data.");
+              let msg = err.message || "Failed to fetch chart data.";
+              if (msg.includes("Failed to fetch")) {
+                msg = "Unable to connect to market data service. Please verify backend service status.";
+              }
+              setErrorMsg(msg);
           }
       })
       .finally(() => {

@@ -72,7 +72,11 @@ const AIAnalyst = () => {
       setReport(data);
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || "An error occurred during analysis.");
+      let msg = e.message || "An error occurred during analysis.";
+      if (msg.includes("Failed to fetch")) {
+        msg = "Unable to connect to the backend server. Please verify network connectivity and backend service status.";
+      }
+      setErrorMsg(msg);
     } finally {
       setIsAnalyzing(false);
     }

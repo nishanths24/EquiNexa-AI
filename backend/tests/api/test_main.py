@@ -344,6 +344,12 @@ def test_cors_behavior():
     assert response.status_code == 200
     assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
     
+    # Test deployed Vercel origin
+    headers_vercel = {"Origin": "https://equi-nexa-536gh73tt-nishanth-ss-projects-6d45770e.vercel.app", "Access-Control-Request-Method": "POST"}
+    response_vercel = client.options("/api/v1/research/query", headers=headers_vercel)
+    assert response_vercel.status_code == 200
+    assert response_vercel.headers.get("access-control-allow-origin") == "https://equi-nexa-536gh73tt-nishanth-ss-projects-6d45770e.vercel.app"
+
     # Unconfigured origin should not be in the ACAO header unless explicitly allowed
     headers_invalid = {"Origin": "https://malicious.com", "Access-Control-Request-Method": "GET"}
     response_invalid = client.options("/api/v1/health", headers=headers_invalid)
